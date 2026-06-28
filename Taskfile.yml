@@ -47,21 +47,27 @@ tasks:
       - dotnet run --project {{.AUTHSERVER_PROJECT}} --launch-profile https
 
   authserver-admin-ui-dev:
-    desc: "啟動 AuthServer Admin UI（https://localhost:7002）；自動啟動 Docker + Migration"
+    desc: "啟動 AuthServer Admin UI（https://localhost:7002）；自動啟動 Docker + Migration + AuthServer"
     deps: [setup]
     cmds:
+      - dotnet run --project {{.AUTHSERVER_PROJECT}} --launch-profile https &
+      - until curl -sk https://localhost:7001/.well-known/openid-configuration > /dev/null 2>&1; do sleep 2; done
       - dotnet run --project {{.ADMIN_PROJECT}} --launch-profile https
 
   client-mvc-dev:
-    desc: "啟動 MVC Client（https://localhost:5101）；自動啟動 Docker + Migration"
+    desc: "啟動 MVC Client（https://localhost:5101）；自動啟動 Docker + Migration + AuthServer"
     deps: [setup]
     cmds:
+      - dotnet run --project {{.AUTHSERVER_PROJECT}} --launch-profile https &
+      - until curl -sk https://localhost:7001/.well-known/openid-configuration > /dev/null 2>&1; do sleep 2; done
       - dotnet run --project src/Clients/OAuth.Client.Mvc/OAuth.Client.Mvc.csproj --launch-profile https
 
   client-api-dev:
-    desc: "啟動 WebAPI Client（https://localhost:5102）；自動啟動 Docker + Migration"
+    desc: "啟動 WebAPI Client（https://localhost:5102）；自動啟動 Docker + Migration + AuthServer"
     deps: [setup]
     cmds:
+      - dotnet run --project {{.AUTHSERVER_PROJECT}} --launch-profile https &
+      - until curl -sk https://localhost:7001/.well-known/openid-configuration > /dev/null 2>&1; do sleep 2; done
       - dotnet run --project src/Clients/OAuth.Client.WebAPI/OAuth.Client.WebAPI.csproj --launch-profile https
 
   client-spa-dev:
@@ -71,9 +77,11 @@ tasks:
       - npm run dev
 
   client-spa-host-dev:
-    desc: "啟動 SPA Host Client（純 HTML, https://localhost:5200）；自動啟動 Docker + Migration"
+    desc: "啟動 SPA Host Client（純 HTML, https://localhost:5200）；自動啟動 Docker + Migration + AuthServer"
     deps: [setup]
     cmds:
+      - dotnet run --project {{.AUTHSERVER_PROJECT}} --launch-profile https &
+      - until curl -sk https://localhost:7001/.well-known/openid-configuration > /dev/null 2>&1; do sleep 2; done
       - dotnet run --project src/Clients/OAuth.Client.SpaHost/OAuth.Client.SpaHost.csproj --launch-profile https
 
   # ── 一鍵啟動 / 停止（背景執行所有服務）────────────────────────────────────────
