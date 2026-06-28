@@ -156,6 +156,14 @@ builder.Services.AddScoped<AccountHandler>();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 builder.Services.AddHostedService<OpenIddictDataSeeder>();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("spa", policy =>
+        policy.WithOrigins("http://localhost:5173", "https://localhost:5173", "https://localhost:3000")
+              .AllowAnyHeader()
+              .AllowAnyMethod());
+});
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -164,6 +172,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseCors("spa");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

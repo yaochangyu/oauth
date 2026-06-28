@@ -12,7 +12,6 @@ namespace OAuth.AuthServer.WebAPI.Connect;
 
 [ApiController]
 public class AuthorizationController(
-    SignInManager<ApplicationUser> signInManager,
     UserManager<ApplicationUser> userManager) : ControllerBase
 {
     [HttpGet("~/connect/authorize")]

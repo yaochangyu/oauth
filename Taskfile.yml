@@ -64,6 +64,12 @@ tasks:
     cmds:
       - docker compose up -d
 
+  client-spa-dev:
+    desc: "開發模式啟動 SPA Client（http://localhost:5173）"
+    dir: src/Clients/OAuth.Client.Spa
+    cmds:
+      - npm run dev
+
   docker-down:
     desc: "停止 Docker 服務"
     cmds:

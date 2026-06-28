@@ -22,11 +22,13 @@ public class OpenIddictDataSeeder(IServiceProvider serviceProvider) : IHostedSer
                 {
                     new Uri("https://localhost:3000/callback"),
                     new Uri("https://localhost:5173/callback"),
+                    new Uri("http://localhost:5173/callback"),
                 },
                 PostLogoutRedirectUris =
                 {
                     new Uri("https://localhost:3000"),
                     new Uri("https://localhost:5173"),
+                    new Uri("http://localhost:5173"),
                 },
                 Permissions =
                 {
