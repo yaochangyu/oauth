@@ -58,9 +58,22 @@
 │       │   │   └── Index.cshtml
 │       │   ├── appsettings.json
 │       │   └── Program.cs
-│       └── OAuth.Client.WebAPI/                      # Web API 示範客戶端（Bearer Token，port 5102）
-│           ├── Controllers/
-│           │   └── MeController.cs                   # GET /api/v1/me、/api/v1/protected
+│       ├── OAuth.Client.WebAPI/                      # Web API 示範客戶端（Bearer Token，port 5102）
+│       │   ├── Controllers/
+│       │   │   └── MeController.cs                   # GET /api/v1/me、/api/v1/protected
+│       │   ├── appsettings.json
+│       │   └── Program.cs
+│       └── OAuth.Client.SpaHost/                     # Vue 3 SPA + ASP.NET Core 靜態主機（port 5200）
+│           ├── ClientApp/                            # Vue 3 原始碼（oidc-client-ts, Vite）
+│           │   ├── src/
+│           │   │   ├── auth/oidc.ts                  # OIDC 設定（PKCE, roles scope）
+│           │   │   ├── views/                        # Home / Profile / Callback
+│           │   │   └── router/                       # Vue Router
+│           │   ├── .env.development                  # VITE_REDIRECT_URI=http://localhost:5173/callback
+│           │   ├── .env.production                   # VITE_REDIRECT_URI=https://localhost:5200/callback
+│           │   ├── vite.config.ts                    # build.outDir=../wwwroot
+│           │   └── package.json
+│           ├── wwwroot/                              # npm run build 輸出（.gitignore）
 │           ├── appsettings.json
 │           └── Program.cs
 ├── test/

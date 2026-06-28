@@ -11,7 +11,7 @@ tasks:
   # ── 內部 setup（不對外顯示）──────────────────────────────────────────────────
   setup:
     internal: true
-    desc: "啟動 Docker 並套用 Migration"
+    desc: "啟動 Docker（PostgreSQL + Seq）並套用 Migration"
     cmds:
       - task: docker-up
       - task: ef-database-update
@@ -70,16 +70,23 @@ tasks:
       - until curl -sk https://localhost:7001/.well-known/openid-configuration > /dev/null 2>&1; do sleep 2; done
       - dotnet run --project src/Clients/OAuth.Client.WebAPI/OAuth.Client.WebAPI.csproj --launch-profile https
 
-  client-spa-dev:
-    desc: "啟動 SPA Client（Vue, http://localhost:5173）"
-    dir: src/Clients/OAuth.Client.Spa
+  spa-dev:
+    desc: "啟動 Vue SPA 開發伺服器（http://localhost:5173），直接 HMR 開發"
+    dir: src/Clients/OAuth.Client.SpaHost/ClientApp
     cmds:
       - npm run dev
 
-  client-spa-host-dev:
-    desc: "啟動 SPA Host Client（純 HTML, https://localhost:5200）；自動啟動 Docker + Migration + AuthServer"
+  spa-build:
+    desc: "建置 Vue SPA（輸出到 wwwroot/），供 SpaHost 以靜態檔案服務"
+    dir: src/Clients/OAuth.Client.SpaHost/ClientApp
+    cmds:
+      - npm run build
+
+  spa-host-dev:
+    desc: "Build Vue SPA 後以 ASP.NET Core 靜態主機啟動（https://localhost:5200）"
     deps: [setup]
     cmds:
+      - task: spa-build
       - dotnet run --project {{.AUTHSERVER_PROJECT}} --launch-profile https &
       - until curl -sk https://localhost:7001/.well-known/openid-configuration > /dev/null 2>&1; do sleep 2; done
       - dotnet run --project src/Clients/OAuth.Client.SpaHost/OAuth.Client.SpaHost.csproj --launch-profile https

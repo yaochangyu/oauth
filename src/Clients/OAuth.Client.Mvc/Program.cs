@@ -1,3 +1,5 @@
+using System.Security.Claims;
+using System.Text.Json;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
@@ -31,15 +33,31 @@ builder.Services.AddAuthentication(options =>
         options.Scope.Add("openid");
         options.Scope.Add("profile");
         options.Scope.Add("email");
+        options.Scope.Add("roles");
         options.Scope.Add("offline_access");
         options.Scope.Add("api");
 
-        // Refresh Token 自動刷新
+        // ID token 中的 "role" claim 被識別為角色
+        options.TokenValidationParameters.RoleClaimType = "role";
+
         options.Events = new OpenIdConnectEvents
         {
-            OnTokenResponseReceived = ctx =>
+            OnUserInformationReceived = ctx =>
             {
-                // Tokens 已由 SaveTokens=true 自動存入 Cookie
+                // UserInfo endpoint 回傳的 "role" 手動加到 ClaimsPrincipal
+                if (ctx.User.RootElement.TryGetProperty("role", out var roleElement)
+                    && ctx.Principal?.Identity is ClaimsIdentity identity)
+                {
+                    if (roleElement.ValueKind == JsonValueKind.Array)
+                    {
+                        foreach (var role in roleElement.EnumerateArray())
+                            identity.AddClaim(new Claim(ClaimTypes.Role, role.GetString() ?? ""));
+                    }
+                    else if (roleElement.ValueKind == JsonValueKind.String)
+                    {
+                        identity.AddClaim(new Claim(ClaimTypes.Role, roleElement.GetString() ?? ""));
+                    }
+                }
                 return Task.CompletedTask;
             },
         };

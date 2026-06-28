@@ -25,8 +25,9 @@ builder.Services.AddOpenIddict()
                .UseDbContext<ApplicationDbContext>();
     });
 
-// ── ASP.NET Core Identity（UserManager / RoleManager） ───────────────────────
-builder.Services.AddIdentity<ApplicationUser, Microsoft.AspNetCore.Identity.IdentityRole>()
+// ── ASP.NET Core Identity（只需要 UserManager / RoleManager，不使用 Identity 的 Auth cookie）
+builder.Services.AddIdentityCore<ApplicationUser>()
+    .AddRoles<Microsoft.AspNetCore.Identity.IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
 
 // ── Authentication：Cookie + OpenIdConnect 對接 AuthServer ───────────────────
