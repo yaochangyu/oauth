@@ -1,0 +1,43 @@
+@page
+@model OAuth.AuthServer.WebAPI.Pages.Connect.AuthorizeModel
+@{
+    ViewData["Title"] = "登入";
+}
+
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+</head>
+<body>
+    <h1>登入</h1>
+
+    @if (Model.ErrorMessage is not null)
+    {
+        <p style="color:red">@Model.ErrorMessage</p>
+    }
+
+    <form method="post">
+        <div>
+            <label>Email</label>
+            <input type="email" name="Email" required />
+        </div>
+        <div>
+            <label>密碼</label>
+            <input type="password" name="Password" required />
+        </div>
+        <button type="submit">登入</button>
+    </form>
+
+    <hr />
+    <p>以社群帳號登入：</p>
+    <a href="/connect/authorize/external?provider=Google&returnUrl=@Uri.EscapeDataString(Model.ReturnUrl ?? "")">Google</a>
+    <a href="/connect/authorize/external?provider=Microsoft&returnUrl=@Uri.EscapeDataString(Model.ReturnUrl ?? "")">Microsoft</a>
+    <a href="/connect/authorize/external?provider=Line&returnUrl=@Uri.EscapeDataString(Model.ReturnUrl ?? "")">Line</a>
+    <a href="/connect/authorize/external?provider=Facebook&returnUrl=@Uri.EscapeDataString(Model.ReturnUrl ?? "")">Facebook</a>
+    <a href="/connect/authorize/external?provider=Facebook&returnUrl=@Uri.EscapeDataString(Model.ReturnUrl ?? "")">以 Instagram 繼續</a>
+    <a href="/connect/authorize/external?provider=Threads&returnUrl=@Uri.EscapeDataString(Model.ReturnUrl ?? "")">Threads</a>
+</body>
+</html>

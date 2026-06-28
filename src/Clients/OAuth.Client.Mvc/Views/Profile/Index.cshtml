@@ -1,0 +1,17 @@
+@{
+    ViewData["Title"] = "個人資料";
+}
+<h1>個人資料</h1>
+<p>歡迎，@User.Identity?.Name</p>
+<h3>Claims</h3>
+<ul>
+@foreach (var claim in ViewBag.Claims)
+{
+    <li><strong>@claim.Type</strong>: @claim.Value</li>
+}
+</ul>
+<p>Access Token 有值：@(!string.IsNullOrEmpty(ViewBag.AccessToken))</p>
+<p>Refresh Token 有值：@ViewBag.HasRefreshToken</p>
+<form action="/Account/Logout" method="post">
+    <button type="submit">登出</button>
+</form>

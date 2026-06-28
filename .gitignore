@@ -1,0 +1,31 @@
+## .NET
+[Bb]in/
+[Oo]bj/
+*.user
+*.suo
+.vs/
+_ReSharper*/
+*.DotSettings.user
+
+## Secrets
+appsettings.*.json
+!appsettings.Development.json
+.env
+*.env
+
+## Logs
+logs/
+*.log
+
+## Playwright
+test-results/
+playwright-report/
+final_runs/
+
+## OS
+.DS_Store
+Thumbs.db
+
+## WSL/NTFS build artifacts (backslash path separator)
+**/[Bb]in[/\\]*
+**/[Oo]bj[/\\]*

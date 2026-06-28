@@ -1,0 +1,64 @@
+version: "3"
+
+vars:
+  AUTHSERVER_PROJECT: src/AuthServer/OAuth.AuthServer.WebAPI/OAuth.AuthServer.WebAPI.csproj
+  DB_PROJECT: src/AuthServer/OAuth.AuthServer.DB/OAuth.AuthServer.DB.csproj
+  INTEGRATION_TEST_PROJECT: test/OAuth.AuthServer.IntegrationTest/OAuth.AuthServer.IntegrationTest.csproj
+  E2E_TEST_PROJECT: test/OAuth.E2E.WebwrightTest/OAuth.E2E.WebwrightTest.csproj
+
+tasks:
+  build:
+    desc: "建置整個解決方案"
+    cmds:
+      - dotnet build OAuth.sln -c Release
+
+  test-integration:
+    desc: "執行 BDD 整合測試（需要 Docker）"
+    cmds:
+      - dotnet test {{.INTEGRATION_TEST_PROJECT}} -c Release --logger "console;verbosity=normal"
+
+  test-e2e:
+    desc: "執行 Playwright E2E 測試"
+    cmds:
+      - dotnet test {{.E2E_TEST_PROJECT}} -c Release --logger "console;verbosity=normal"
+
+  test:
+    desc: "執行所有測試"
+    cmds:
+      - task: test-integration
+      - task: test-e2e
+
+  api-dev:
+    desc: "開發模式啟動 Authorization Server"
+    cmds:
+      - dotnet run --project {{.AUTHSERVER_PROJECT}} --environment Development
+
+  client-mvc-dev:
+    desc: "開發模式啟動 MVC Client"
+    cmds:
+      - dotnet run --project src/Clients/OAuth.Client.Mvc/OAuth.Client.Mvc.csproj --environment Development
+
+  client-api-dev:
+    desc: "開發模式啟動 WebAPI Client"
+    cmds:
+      - dotnet run --project src/Clients/OAuth.Client.WebAPI/OAuth.Client.WebAPI.csproj --environment Development
+
+  ef-migration-add:
+    desc: "新增 EF Core Migration（用法：task ef-migration-add NAME=MigrationName）"
+    cmds:
+      - dotnet ef migrations add {{.NAME}} --project {{.DB_PROJECT}} --startup-project {{.AUTHSERVER_PROJECT}}
+
+  ef-database-update:
+    desc: "更新資料庫"
+    cmds:
+      - dotnet ef database update --project {{.DB_PROJECT}} --startup-project {{.AUTHSERVER_PROJECT}}
+
+  docker-up:
+    desc: "啟動 Docker 服務（PostgreSQL + Seq）"
+    cmds:
+      - docker compose up -d
+
+  docker-down:
+    desc: "停止 Docker 服務"
+    cmds:
+      - docker compose down

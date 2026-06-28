@@ -1,0 +1,15 @@
+<Solution>
+  <Folder Name="/src/" />
+  <Folder Name="/src/AuthServer/">
+    <Project Path="src/AuthServer/OAuth.AuthServer.DB/OAuth.AuthServer.DB.csproj" />
+    <Project Path="src/AuthServer/OAuth.AuthServer.WebAPI/OAuth.AuthServer.WebAPI.csproj" />
+  </Folder>
+  <Folder Name="/src/Clients/">
+    <Project Path="src/Clients/OAuth.Client.Mvc/OAuth.Client.Mvc.csproj" />
+    <Project Path="src/Clients/OAuth.Client.WebAPI/OAuth.Client.WebAPI.csproj" />
+  </Folder>
+  <Folder Name="/test/">
+    <Project Path="test/OAuth.AuthServer.IntegrationTest/OAuth.AuthServer.IntegrationTest.csproj" />
+    <Project Path="test/OAuth.E2E.WebwrightTest/OAuth.E2E.WebwrightTest.csproj" />
+  </Folder>
+</Solution>

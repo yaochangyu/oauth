@@ -1,0 +1,76 @@
+# 專案資料夾結構
+
+```
+/mnt/d/lab/oauth/
+├── src/
+│   ├── AuthServer/
+│   │   ├── OAuth.AuthServer.WebAPI/                  # Authorization Server 主程式（ASP.NET Core 10）
+│   │   │   ├── Account/
+│   │   │   │   ├── AccountApiController.cs           # POST /api/v1/account/register
+│   │   │   │   ├── AccountHandler.cs                 # 帳號業務邏輯（Result Pattern）
+│   │   │   │   ├── AccountManagementController.cs    # GET /api/v1/account/me 等
+│   │   │   │   ├── AccountModels.cs                  # DTO：RegisterRequest / RegisterResponse / Failure
+│   │   │   │   └── RegisterRequestValidator.cs       # FluentValidation
+│   │   │   ├── Connect/
+│   │   │   │   ├── AuthorizationController.cs        # GET/POST /connect/authorize（passthrough）
+│   │   │   │   ├── ExternalLoginController.cs        # Social Login Challenge & Callback
+│   │   │   │   ├── TokenController.cs                # POST /connect/token
+│   │   │   │   └── UserInfoController.cs             # GET /connect/userinfo
+│   │   │   ├── Infrastructure/
+│   │   │   │   ├── OpenIddictDataSeeder.cs            # Seed：SPA/MVC/WebAPI/Postman Client
+│   │   │   │   └── Threads/
+│   │   │   │       ├── ThreadsAuthenticationDefaults.cs
+│   │   │   │       ├── ThreadsAuthenticationExtensions.cs
+│   │   │   │       ├── ThreadsAuthenticationHandler.cs
+│   │   │   │       └── ThreadsAuthenticationOptions.cs
+│   │   │   ├── Pages/
+│   │   │   │   └── Connect/
+│   │   │   │       ├── Authorize.cshtml              # 登入頁面（Razor Page）
+│   │   │   │       └── Authorize.cshtml.cs
+│   │   │   ├── appsettings.Development.json
+│   │   │   └── Program.cs
+│   │   └── OAuth.AuthServer.DB/                      # EF Core 資料存取層（PostgreSQL）
+│   │       ├── Migrations/                           # EF Core Migrations
+│   │       ├── ApplicationDbContext.cs               # IdentityDbContext + OpenIddict
+│   │       └── ApplicationUser.cs                    # IdentityUser + DisplayName + AvatarUrl
+│   └── Clients/
+│       ├── OAuth.Client.Mvc/                         # MVC 示範客戶端（Cookie SSO，port 5101）
+│       │   ├── Controllers/
+│       │   │   ├── AccountController.cs              # Login / Logout
+│       │   │   └── ProfileController.cs              # /profile（需登入）
+│       │   ├── Views/Profile/
+│       │   │   └── Index.cshtml
+│       │   ├── appsettings.json
+│       │   └── Program.cs
+│       └── OAuth.Client.WebAPI/                      # Web API 示範客戶端（Bearer Token，port 5102）
+│           ├── Controllers/
+│           │   └── MeController.cs                   # GET /api/v1/me、/api/v1/protected
+│           ├── appsettings.json
+│           └── Program.cs
+├── test/
+│   ├── OAuth.AuthServer.IntegrationTest/             # BDD 整合測試（Reqnroll + Testcontainers）
+│   │   ├── _01_Account/
+│   │   │   ├── 帳號註冊.feature
+│   │   │   └── 帳號註冊Step.cs
+│   │   ├── _02_Token/
+│   │   │   ├── token交換.feature                    # Discovery / Client Credentials / invalid_grant
+│   │   │   └── token交換Step.cs
+│   │   ├── _03_Security/
+│   │   │   ├── 安全性驗證.feature                   # 401 / PKCE / no implicit flow
+│   │   │   └── 安全性驗證Step.cs
+│   │   ├── BaseStep.cs                              # 共用 BDD Steps（中文）
+│   │   ├── TestAssistant.cs                         # Testcontainers 工具
+│   │   └── TestServer.cs                            # WebApplicationFactory
+│   └── OAuth.E2E.WebwrightTest/                     # E2E 測試（Webwright SSO 互動驗證）
+├── doc/
+│   └── openapi.yml                                  # OpenAPI 規格（完整）
+├── .archive/                                        # 已完成的計畫書封存
+├── .issues/                                         # 問題記錄
+├── docker-compose.yml                               # PostgreSQL 16 + Seq
+├── Taskfile.yml                                     # 開發指令集中管理
+├── .gitignore
+├── OAuth.slnx                                       # Solution（.NET 10 新格式）
+├── .archive/
+│   └── oauth-oidc-server.plan.md                    # 實作計畫書（已完成，封存）
+└── tree.md                                          # 本檔案
+```

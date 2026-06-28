@@ -1,0 +1,32 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: oauth_postgres
+    environment:
+      POSTGRES_USER: oauth
+      POSTGRES_PASSWORD: oauth_pass
+      POSTGRES_DB: oauth_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - oauth_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U oauth -d oauth_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  seq:
+    image: datalust/seq:latest
+    container_name: oauth_seq
+    environment:
+      ACCEPT_EULA: Y
+    ports:
+      - "5341:5341"
+      - "8081:80"
+    volumes:
+      - oauth_seq_data:/data
+
+volumes:
+  oauth_postgres_data:
+  oauth_seq_data:
