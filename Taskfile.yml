@@ -96,7 +96,7 @@ tasks:
     desc: "停止所有開發中的 .NET 服務"
     cmds:
       - pkill -f "OAuth.AuthServer.WebAPI" || true
-      - pkill -f "OAuth.AuthServer.Admin.WebUI" || true
+      - pkill -f "OAuth.AuthServer.Admin.WebUI" || pkill -f "OAuth.Admin.WebUI" || true
       - pkill -f "OAuth.Client.Mvc" || true
       - pkill -f "OAuth.Client.WebAPI" || true
       - pkill -f "OAuth.Client.SpaHost" || true
