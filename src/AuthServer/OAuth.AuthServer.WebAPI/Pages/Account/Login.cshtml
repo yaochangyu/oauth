@@ -36,8 +36,8 @@
         @Html.AntiForgeryToken()
         <input type="hidden" name="ReturnUrl" value="@Model.ReturnUrl" />
         <div class="form-group">
-            <label>Email</label>
-            <input type="email" name="Email" required autocomplete="username" />
+            <label>帳號</label>
+            <input type="text" name="userName" required autocomplete="username" />
         </div>
         <div class="form-group">
             <label>密碼</label>
