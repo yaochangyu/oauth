@@ -7,9 +7,9 @@ namespace OAuth.E2E.WebwrightTest;
 /// </summary>
 public sealed class MvcClientFixture : IAsyncLifetime
 {
-    private const string MvcClientBase  = "https://localhost:5101";
-    private const string AdminUserName  = "admin";
-    private const string AdminPassword  = "Admin@123456";
+    private static string MvcClientBase  => TestSettings.MvcClientBase;
+    private static string AdminUserName  => TestSettings.AdminUserName;
+    private static string AdminPassword  => TestSettings.AdminPassword;
 
     private IPlaywright? _playwright;
     private IBrowser?    _browser;

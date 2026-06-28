@@ -71,3 +71,27 @@ task client-spa-host-dev  # SPA Host (HTML) https://localhost:5200
 - RequireLowercase: true
 - RequiredLength: 8
 - RequireNonAlphanumeric: false
+
+## 開發規則
+
+### TDD 流程（E2E / 整合測試）
+
+功能實作**必須**遵守 Red → Green 流程：
+
+1. **先寫測試**（測試應失敗，紅燈）
+2. **執行測試，確認紅燈**（`dotnet test` 應看到 FAIL）
+3. **實作功能**
+4. **執行測試，確認綠燈**（`dotnet test` 應看到 PASS）
+
+不允許跳過紅燈確認直接實作。
+
+### BDD 測試規範
+
+所有測試（整合測試、E2E 測試）一律使用 **BDD 格式**：
+
+- 框架：**Reqnroll**（`Reqnroll.xUnit`）
+- 測試案例寫在 `.feature` 檔，使用 Gherkin 語法
+- 保留字（Feature、Background、Scenario、Given、When、Then）使用**英文**
+- Step 描述使用**繁體中文**
+- Step 實作放在對應的 `*Step.cs` 檔案，套用 `[Binding]`
+- E2E 測試使用 **Reqnroll + Playwright**（不使用純 xunit Fact）

@@ -7,9 +7,9 @@ namespace OAuth.E2E.WebwrightTest;
 /// </summary>
 public sealed class AdminUIFixture : IAsyncLifetime
 {
-    private const string AdminUIBase   = "https://localhost:7002";
-    private const string AdminUserName = "admin";
-    private const string AdminPassword = "Admin@123456";
+    private static string AdminUIBase   => TestSettings.AdminUIBase;
+    private static string AdminUserName => TestSettings.AdminUserName;
+    private static string AdminPassword => TestSettings.AdminPassword;
 
     private IPlaywright? _playwright;
     private IBrowser?    _browser;

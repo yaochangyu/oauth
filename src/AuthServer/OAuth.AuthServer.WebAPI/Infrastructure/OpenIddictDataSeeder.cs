@@ -61,7 +61,37 @@ public class OpenIddictDataSeeder(IServiceProvider serviceProvider) : IHostedSer
                 ClientId     = "mvc-client",
                 ClientSecret = "mvc-client-secret",
                 ClientType   = ClientTypes.Confidential,
+                ConsentType  = ConsentTypes.Explicit,
                 DisplayName  = "MVC Client",
+                RedirectUris           = { new Uri("https://localhost:5101/signin-oidc") },
+                PostLogoutRedirectUris = { new Uri("https://localhost:5101/signout-callback-oidc") },
+                Permissions =
+                {
+                    Permissions.Endpoints.Authorization,
+                    Permissions.Endpoints.Token,
+                    Permissions.Endpoints.EndSession,
+                    Permissions.GrantTypes.AuthorizationCode,
+                    Permissions.GrantTypes.RefreshToken,
+                    Permissions.ResponseTypes.Code,
+                    Permissions.Scopes.Email,
+                    Permissions.Scopes.Profile,
+                    Permissions.Scopes.Roles,
+                    Permissions.Prefixes.Scope + "offline_access",
+                    Permissions.Prefixes.Scope + "api",
+                },
+                Requirements = { Requirements.Features.ProofKeyForCodeExchange },
+            }, cancellationToken);
+        }
+
+        if (await manager.FindByClientIdAsync("mvc-implicit", cancellationToken) is null)
+        {
+            await manager.CreateAsync(new OpenIddictApplicationDescriptor
+            {
+                ClientId     = "mvc-implicit",
+                ClientSecret = "mvc-implicit-secret",
+                ClientType   = ClientTypes.Confidential,
+                ConsentType  = ConsentTypes.Implicit,
+                DisplayName  = "MVC Client (Implicit Consent)",
                 RedirectUris           = { new Uri("https://localhost:5101/signin-oidc") },
                 PostLogoutRedirectUris = { new Uri("https://localhost:5101/signout-callback-oidc") },
                 Permissions =

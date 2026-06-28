@@ -10,7 +10,7 @@ public class AuthServerTestFactory : WebApplicationFactory<Program>
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        builder.UseEnvironment("Testing");
+        builder.UseEnvironment("Development");
 
         builder.ConfigureServices(services =>
         {
@@ -33,14 +33,23 @@ public class AuthServerTestFactory : WebApplicationFactory<Program>
                 options.UseNpgsql(connectionString);
                 options.UseOpenIddict();
             });
+
         });
     }
 
     public async Task InitializeDatabaseAsync()
     {
-        using var scope = Services.CreateScope();
-        var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<ApplicationDbContext>>();
-        await using var dbContext = await factory.CreateDbContextAsync();
+        // 直接建立 DbContext 執行 migration，避免透過 Services 啟動 host（會觸發 hosted services
+        // 在 migration 完成前存取 OpenIddict 資料表，導致 42P01 relation does not exist）
+        var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
+            ?? throw new InvalidOperationException("測試用 PostgreSQL Connection String 未設定");
+
+        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
+            .UseNpgsql(connectionString)
+            .UseOpenIddict()
+            .Options;
+
+        await using var dbContext = new ApplicationDbContext(options);
         await dbContext.Database.MigrateAsync();
     }
 }

@@ -47,9 +47,11 @@ public class BaseStep : Steps
     [Given(@"初始化測試伺服器")]
     public void Given初始化測試伺服器()
     {
+        // BaseAddress 設為 https:// 讓 OpenIddict 看到 HTTPS scheme（TestServer 不做真正的 TLS）
         var client = Factory!.CreateClient(new Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactoryClientOptions
         {
             AllowAutoRedirect = false,
+            BaseAddress       = new Uri("https://localhost/"),
         });
         this.ScenarioContext["HttpClient"] = client;
     }
