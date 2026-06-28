@@ -18,7 +18,7 @@ public class LoginModel(
     }
 
     public async Task<IActionResult> OnPostAsync(
-        string email,
+        string userName,
         string password,
         string? returnUrl = null,
         CancellationToken cancellationToken = default)
@@ -26,7 +26,7 @@ public class LoginModel(
         ReturnUrl = returnUrl;
 
         var result = await signInManager.PasswordSignInAsync(
-            email, password, isPersistent: false, lockoutOnFailure: true);
+            userName, password, isPersistent: false, lockoutOnFailure: true);
 
         if (!result.Succeeded)
         {
