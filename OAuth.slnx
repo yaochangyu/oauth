@@ -9,6 +9,7 @@
   </Folder>
   <Folder Name="/src/Clients/">
     <Project Path="src/Clients/OAuth.Client.Mvc/OAuth.Client.Mvc.csproj" />
+    <Project Path="src/Clients/OAuth.Client.SpaHost/OAuth.Client.SpaHost.csproj" />
     <Project Path="src/Clients/OAuth.Client.WebAPI/OAuth.Client.WebAPI.csproj" />
   </Folder>
   <Folder Name="/test/">

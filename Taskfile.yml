@@ -65,10 +65,15 @@ tasks:
       - docker compose up -d
 
   client-spa-dev:
-    desc: "開發模式啟動 SPA Client（http://localhost:5173）"
+    desc: "開發模式啟動 SPA Client（Vue, http://localhost:5173）"
     dir: src/Clients/OAuth.Client.Spa
     cmds:
       - npm run dev
+
+  client-spa-host-dev:
+    desc: "開發模式啟動 SPA Host Client（純 HTML SPA, https://localhost:5200）"
+    cmds:
+      - dotnet run --project src/Clients/OAuth.Client.SpaHost/OAuth.Client.SpaHost.csproj --environment Development --launch-profile https
 
   docker-down:
     desc: "停止 Docker 服務"
