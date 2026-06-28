@@ -8,6 +8,15 @@ vars:
   E2E_TEST_PROJECT: test/OAuth.E2E.WebwrightTest/OAuth.E2E.WebwrightTest.csproj
 
 tasks:
+  # ── 內部 setup（不對外顯示）──────────────────────────────────────────────────
+  setup:
+    internal: true
+    desc: "啟動 Docker 並套用 Migration"
+    cmds:
+      - task: docker-up
+      - task: ef-database-update
+
+  # ── Build / Test ──────────────────────────────────────────────────────────────
   build:
     desc: "建置整個解決方案"
     cmds:
@@ -15,6 +24,7 @@ tasks:
 
   test-integration:
     desc: "執行 BDD 整合測試（需要 Docker）"
+    deps: [docker-up]
     cmds:
       - dotnet test {{.INTEGRATION_TEST_PROJECT}} -c Release --logger "console;verbosity=normal"
 
@@ -29,33 +39,76 @@ tasks:
       - task: test-integration
       - task: test-e2e
 
+  # ── 個別服務啟動（前台，適合單獨開 terminal 除錯）────────────────────────────
   api-dev:
-    desc: "開發模式啟動 Authorization Server（https://localhost:7001）"
+    desc: "啟動 AuthServer（https://localhost:7001）；自動啟動 Docker + Migration"
+    deps: [setup]
     cmds:
       - dotnet run --project {{.AUTHSERVER_PROJECT}} --launch-profile https
 
+  admin-dev:
+    desc: "啟動 Admin UI（https://localhost:7002）；自動啟動 Docker + Migration"
+    deps: [setup]
+    cmds:
+      - dotnet run --project {{.ADMIN_PROJECT}} --launch-profile https
+
   client-mvc-dev:
-    desc: "開發模式啟動 MVC Client（https://localhost:5101）"
+    desc: "啟動 MVC Client（https://localhost:5101）；自動啟動 Docker + Migration"
+    deps: [setup]
     cmds:
       - dotnet run --project src/Clients/OAuth.Client.Mvc/OAuth.Client.Mvc.csproj --launch-profile https
 
   client-api-dev:
-    desc: "開發模式啟動 WebAPI Client（https://localhost:5102）"
+    desc: "啟動 WebAPI Client（https://localhost:5102）；自動啟動 Docker + Migration"
+    deps: [setup]
     cmds:
       - dotnet run --project src/Clients/OAuth.Client.WebAPI/OAuth.Client.WebAPI.csproj --launch-profile https
 
-  admin-dev:
-    desc: "開發模式啟動 Admin UI（https://localhost:7002）"
+  client-spa-dev:
+    desc: "啟動 SPA Client（Vue, http://localhost:5173）"
+    dir: src/Clients/OAuth.Client.Spa
     cmds:
-      - dotnet run --project {{.ADMIN_PROJECT}} --launch-profile https
+      - npm run dev
 
+  client-spa-host-dev:
+    desc: "啟動 SPA Host Client（純 HTML, https://localhost:5200）；自動啟動 Docker + Migration"
+    deps: [setup]
+    cmds:
+      - dotnet run --project src/Clients/OAuth.Client.SpaHost/OAuth.Client.SpaHost.csproj --launch-profile https
+
+  # ── 一鍵啟動 / 停止（背景執行所有服務）────────────────────────────────────────
+  start-all:
+    desc: "背景啟動所有服務（Docker → Migration → AuthServer → 其他）"
+    cmds:
+      - task: docker-up
+      - task: ef-database-update
+      - dotnet run --project {{.AUTHSERVER_PROJECT}} --launch-profile https &
+      - echo "等待 AuthServer 就緒..."
+      - until curl -sk https://localhost:7001/.well-known/openid-configuration > /dev/null 2>&1; do sleep 2; done
+      - echo "AuthServer 就緒，啟動其他服務..."
+      - dotnet run --project {{.ADMIN_PROJECT}} --launch-profile https &
+      - dotnet run --project src/Clients/OAuth.Client.Mvc/OAuth.Client.Mvc.csproj --launch-profile https &
+      - dotnet run --project src/Clients/OAuth.Client.WebAPI/OAuth.Client.WebAPI.csproj --launch-profile https &
+      - dotnet run --project src/Clients/OAuth.Client.SpaHost/OAuth.Client.SpaHost.csproj --launch-profile https &
+      - echo "所有服務已在背景啟動，使用 task stop-dev 停止"
+
+  stop-dev:
+    desc: "停止所有開發中的 .NET 服務"
+    cmds:
+      - pkill -f "OAuth.AuthServer.WebAPI" || true
+      - pkill -f "OAuth.AuthServer.Admin.WebUI" || true
+      - pkill -f "OAuth.Client.Mvc" || true
+      - pkill -f "OAuth.Client.WebAPI" || true
+      - pkill -f "OAuth.Client.SpaHost" || true
+
+  # ── DB / Docker ───────────────────────────────────────────────────────────────
   ef-migration-add:
     desc: "新增 EF Core Migration（用法：task ef-migration-add NAME=MigrationName）"
     cmds:
       - dotnet ef migrations add {{.NAME}} --project {{.DB_PROJECT}} --startup-project {{.AUTHSERVER_PROJECT}}
 
   ef-database-update:
-    desc: "更新資料庫"
+    desc: "套用 DB Migration"
     cmds:
       - dotnet ef database update --project {{.DB_PROJECT}} --startup-project {{.AUTHSERVER_PROJECT}}
 
@@ -63,26 +116,6 @@ tasks:
     desc: "啟動 Docker 服務（PostgreSQL + Seq）"
     cmds:
       - docker compose up -d
-
-  client-spa-dev:
-    desc: "開發模式啟動 SPA Client（Vue, http://localhost:5173）"
-    dir: src/Clients/OAuth.Client.Spa
-    cmds:
-      - npm run dev
-
-  client-spa-host-dev:
-    desc: "開發模式啟動 SPA Host Client（純 HTML SPA, https://localhost:5200）"
-    cmds:
-      - dotnet run --project src/Clients/OAuth.Client.SpaHost/OAuth.Client.SpaHost.csproj --environment Development --launch-profile https
-
-  stop-dev:
-    desc: "停止所有開發中的 .NET 服務"
-    cmds:
-      - pkill -f "OAuth.AuthServer.WebAPI" || true
-      - pkill -f "OAuth.Admin.WebUI" || true
-      - pkill -f "OAuth.Client.Mvc" || true
-      - pkill -f "OAuth.Client.WebAPI" || true
-      - pkill -f "OAuth.Client.SpaHost" || true
 
   docker-down:
     desc: "停止 Docker 服務"
