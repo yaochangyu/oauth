@@ -14,7 +14,7 @@ sequenceDiagram
     actor User as 使用者
     participant Client as 客戶端 (SPA/MVC)
     participant AS as 授權伺服器 (AuthServer)
-    database DB as 資料庫 (Identity + OpenIddict)
+    database "資料庫 (Identity + OpenIddict)" as DB
 
     User->>Client: 點擊登入
     Note over Client: 產生 code_verifier<br/>與 code_challenge (S256)
@@ -40,7 +40,7 @@ sequenceDiagram
     participant Client as 客戶端 (SPA/MVC)
     participant AS as 授權伺服器 (AuthServer)
     participant Provider as 外部 Identity Provider (Google等)
-    database DB as 資料庫 (Identity)
+    database "資料庫 (Identity)" as DB
 
     User->>Client: 點擊使用外部帳號登入
     Client->>AS: 導向 /connect/authorize
@@ -73,7 +73,7 @@ sequenceDiagram
     autonumber
     participant Client as API 客戶端 (WebAPI Client)
     participant AS as 授權伺服器 (AuthServer)
-    database DB as 資料庫 (OpenIddict)
+    database "資料庫 (OpenIddict)" as DB
 
     Client->>AS: POST /connect/token<br/>(grant_type=client_credentials, client_id, client_secret)
     AS->>DB: 驗證 Client ID & Client Secret
@@ -120,7 +120,7 @@ stateDiagram-v2
     note right of RefreshToken_Rotated
         若偵測到重複使用已 Rotated 的舊 Refresh Token，
         授權伺服器將拒絕請求 (invalid_grant)。
-    </note>
+    end note
 ```
 
 ---
@@ -142,7 +142,7 @@ stateDiagram-v2
     state "Git HTTPS 憑證" as GitCreds {
         [*] --> Git_Token_Issued : GitLab/GitHub 核發 Personal Access Token
         Git_Token_Issued --> Git_Helper_Configured : 設定 git credential helper (不寫入 Remote URL)
-        Git_Helper_Configured --> Git_Clean_URL : remote 保持 https://host/repo.git
+        Git_Helper_Configured --> Git_Clean_URL : "remote 保持 https://host/repo.git"
         Git_Clean_URL --> Git_Helper_Authed : 執行 git 指令時由 helper 自動注入憑證
         Git_Helper_Authed --> Git_Token_Expired : Token 逾期或輪替
         Git_Helper_Authed --> Git_Token_Revoked : 主動註銷 Token

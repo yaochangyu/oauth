@@ -80,16 +80,22 @@
 │   └── OAuth.E2E.WebwrightTest/                     # E2E 測試（Webwright SSO 互動驗證）
 ├── doc/
 │   ├── diagrams.md                                  # 核心授權流程與憑證狀態設計文件
+│   ├── oauth2-oidc-sequence-diagrams.md             # OAuth2 + OIDC 驗證循序圖（導出檔）
 │   └── openapi.yml                                  # OpenAPI 規格（完整）
 ├── .archive/                                        # 已完成的計畫書封存
 │   ├── AdminWorktree.plan.md                        # Git Worktree 與 Admin UI 問題調查計畫（已完成，封存）
 │   ├── diagrams.plan.md                             # 循序圖與憑證狀態機設計計畫（已完成，封存）
-│   └── oauth-oidc-server.plan.md                    # 實作計畫書（已完成，封存）
+│   ├── fix-diagram-syntax.plan.md                   # 修正 Mermaid 語法錯誤計畫書（已完成，封存）
+│   ├── fix-mermaid-syntax-2.plan.md                 # 修正 Mermaid 語法錯誤計畫書(二)（已完成，封存）
+│   ├── oauth-oidc-server.plan.md                    # 實作計畫書（已完成，封存）
+│   └── RemoveCoAuthoredBy.plan.md                   # 移除 Co-authored-by 實作計畫書（已完成，封存）
 ├── .issues/                                         # 問題記錄
-│   └── diagrams.issues.md                           # 建置驗證失敗記錄
+│   ├── diagrams.issues.md                           # 建置驗證失敗記錄
+│   └── RemoveCoAuthoredBy.issues.md                 # 移除 Co-authored-by 執行問題紀錄
 ├── docker-compose.yml                               # PostgreSQL 16 + Seq
 ├── Taskfile.yml                                     # 開發指令集中管理
 ├── .gitignore
 ├── OAuth.slnx                                       # Solution（.NET 10 新格式）
 └── tree.md                                          # 本檔案
+
 ```
