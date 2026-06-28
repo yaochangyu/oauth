@@ -55,10 +55,16 @@ task client-spa-host-dev  # SPA Host (HTML) https://localhost:5200
 
 ## 管理員帳號
 
-- **帳號**：yao
+### OAuth Admin UI（https://localhost:7002）
+- **帳號**：yao（或 yao@localhost）
 - **密碼**：Aa123456
 - **角色**：admin
 - **建立方式**：`AdminUserSeeder`（AuthServer 啟動時自動 seed，已存在則跳過）
+
+### Seq Log UI（http://localhost:8081）
+- **帳號**：admin
+- **密碼**：Admin@123456
+- **設定來源**：`docker-compose.yml` → `SEQ_FIRSTRUN_ADMINPASSWORD`（僅首次建立時有效）
 
 ## 密碼政策
 
