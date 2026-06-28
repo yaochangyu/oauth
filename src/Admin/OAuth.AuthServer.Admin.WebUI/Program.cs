@@ -58,11 +58,14 @@ builder.Services.AddAuthentication(options =>
     options.ClaimActions.MapJsonKey("role", "role");
 });
 
-// ── Authorization：admin policy ───────────────────────────────────────────────
+// ── Authorization：admin policy + fallback（所有 Blazor 頁面預設需認證）────────
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("AdminOnly", policy =>
         policy.RequireRole("admin"));
+    options.FallbackPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .Build();
 });
 
 // ── MudBlazor ─────────────────────────────────────────────────────────────────
@@ -91,7 +94,7 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseAntiforgery();
-app.MapStaticAssets();
+app.MapStaticAssets().AllowAnonymous();
 app.MapRazorComponents<App>()
    .AddInteractiveServerRenderMode();
 
@@ -100,7 +103,7 @@ app.MapGet("/login", () => Results.Challenge(
     new Microsoft.AspNetCore.Authentication.AuthenticationProperties
     {
         RedirectUri = "/"
-    }, [OpenIdConnectDefaults.AuthenticationScheme]));
+    }, [OpenIdConnectDefaults.AuthenticationScheme])).AllowAnonymous();
 
 app.MapPost("/logout", async (HttpContext ctx) =>
 {
