@@ -75,6 +75,15 @@ tasks:
     cmds:
       - dotnet run --project src/Clients/OAuth.Client.SpaHost/OAuth.Client.SpaHost.csproj --environment Development --launch-profile https
 
+  stop-dev:
+    desc: "停止所有開發中的 .NET 服務"
+    cmds:
+      - pkill -f "OAuth.AuthServer.WebAPI" || true
+      - pkill -f "OAuth.Admin.WebUI" || true
+      - pkill -f "OAuth.Client.Mvc" || true
+      - pkill -f "OAuth.Client.WebAPI" || true
+      - pkill -f "OAuth.Client.SpaHost" || true
+
   docker-down:
     desc: "停止 Docker 服務"
     cmds:
