@@ -29,3 +29,5 @@ Thumbs.db
 ## WSL/NTFS build artifacts (backslash path separator)
 **/[Bb]in[/\\]*
 **/[Oo]bj[/\\]*
+
+*.feature.cs
