@@ -26,7 +26,9 @@
 │   │   │   ├── Pages/
 │   │   │   │   └── Connect/
 │   │   │   │       ├── Authorize.cshtml              # 登入頁面（Razor Page）
-│   │   │   │       └── Authorize.cshtml.cs
+│   │   │   │       ├── Authorize.cshtml.cs
+│   │   │   │       ├── Consent.cshtml                # 同意頁面（Scope 確認 / Accept / Deny）
+│   │   │   │       └── Consent.cshtml.cs
 │   │   │   ├── appsettings.Development.json
 │   │   │   └── Program.cs
 │   │   └── OAuth.AuthServer.DB/                      # EF Core 資料存取層（PostgreSQL）
@@ -90,7 +92,29 @@
 │   │   ├── BaseStep.cs                              # 共用 BDD Steps（中文）
 │   │   ├── TestAssistant.cs                         # Testcontainers 工具
 │   │   └── TestServer.cs                            # WebApplicationFactory
-│   └── OAuth.E2E.WebwrightTest/                     # E2E 測試（Webwright SSO 互動驗證）
+│   ├── OAuth.Clients.PlaywrightTest/                 # Client E2E 測試（Reqnroll + Playwright + Testcontainers）
+│   │   ├── _01_AdminUI/
+│   │   │   ├── AdminUI管理介面.feature               # BDD：Admin UI 管理介面（Dashboard / Users / Roles / Applications / Scopes）
+│   │   │   └── AdminUI管理介面Step.cs
+│   │   ├── _02_MvcClient/
+│   │   │   ├── MvcClient驗證流程.feature             # BDD：MVC Client OIDC 登入、Profile、role claim、AccessToken
+│   │   │   └── MvcClient驗證流程Step.cs
+│   │   ├── _03_SpaHost/
+│   │   │   ├── SpaHost驗證流程.feature               # BDD：SPA Host OIDC 登入、Profile、role claim、AccessToken
+│   │   │   └── SpaHost驗證流程Step.cs
+│   │   ├── _04_Consent/
+│   │   │   ├── 同意頁面.feature                     # BDD：Consent 同意頁面（Explicit / 同意 / 拒絕 / Implicit）
+│   │   │   └── 同意頁面Step.cs
+│   │   ├── PlaywrightBaseStep.cs                    # [BeforeTestRun]/[AfterTestRun]（服務生命週期）+ [BeforeScenario]/[AfterScenario]（瀏覽器）+ 共用 Steps
+│   │   └── TestSettings.cs                          # URL / 帳密設定（環境變數優先）
+│   └── OAuth.E2E.WebwrightTest/                     # 舊 E2E 測試（純 xUnit，保留參考用）
+│       ├── AdminUIFixture.cs
+│       ├── AdminUITests.cs
+│       ├── MvcClientFixture.cs
+│       ├── MvcClientTests.cs
+│       ├── SpaHostFixture.cs
+│       ├── SpaHostTests.cs
+│       └── TestSettings.cs
 ├── doc/
 │   ├── diagrams.md                                  # 核心授權流程與憑證狀態設計文件
 │   ├── oauth2-oidc-sequence-diagrams.md             # OAuth2 + OIDC 驗證循序圖（導出檔）

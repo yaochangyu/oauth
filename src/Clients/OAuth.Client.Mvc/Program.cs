@@ -60,6 +60,17 @@ builder.Services.AddAuthentication(options =>
                 }
                 return Task.CompletedTask;
             },
+            OnRemoteFailure = ctx =>
+            {
+                var msg        = ctx.Failure?.Message ?? string.Empty;
+                var queryError = ctx.Request.Query["error"].ToString();
+                var isAccessDenied = msg.Contains("access_denied", StringComparison.OrdinalIgnoreCase)
+                                  || queryError.Equals("access_denied", StringComparison.OrdinalIgnoreCase);
+                var code = isAccessDenied ? "access_denied" : "error";
+                ctx.Response.Redirect($"/Home/Error?code={code}");
+                ctx.HandleResponse();
+                return Task.CompletedTask;
+            },
         };
 
         options.RequireHttpsMetadata = false; // 開發環境
