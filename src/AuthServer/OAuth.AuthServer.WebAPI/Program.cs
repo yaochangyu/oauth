@@ -159,7 +159,10 @@ builder.Services.AddHostedService<OpenIddictDataSeeder>();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("spa", policy =>
-        policy.WithOrigins("http://localhost:5173", "https://localhost:5173", "https://localhost:3000")
+        policy.WithOrigins(
+                  "http://localhost:5173", "https://localhost:5173",
+                  "https://localhost:3000",
+                  "http://localhost:5200", "https://localhost:5200")
               .AllowAnyHeader()
               .AllowAnyMethod());
 });
