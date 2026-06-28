@@ -39,6 +39,7 @@ public class OpenIddictDataSeeder(IServiceProvider serviceProvider) : IHostedSer
                     Permissions.Scopes.Email,
                     Permissions.Scopes.Profile,
                     Permissions.Scopes.Roles,
+                    Permissions.Prefixes.Scope + "offline_access",
                     Permissions.Prefixes.Scope + "api",
                 },
                 Requirements =
@@ -76,6 +77,7 @@ public class OpenIddictDataSeeder(IServiceProvider serviceProvider) : IHostedSer
                     Permissions.Scopes.Email,
                     Permissions.Scopes.Profile,
                     Permissions.Scopes.Roles,
+                    Permissions.Prefixes.Scope + "offline_access",
                     Permissions.Prefixes.Scope + "api",
                 },
                 Requirements =
@@ -127,7 +129,45 @@ public class OpenIddictDataSeeder(IServiceProvider serviceProvider) : IHostedSer
                     Permissions.Scopes.Email,
                     Permissions.Scopes.Profile,
                     Permissions.Scopes.Roles,
+                    Permissions.Prefixes.Scope + "offline_access",
                     Permissions.Prefixes.Scope + "api",
+                },
+                Requirements =
+                {
+                    Requirements.Features.ProofKeyForCodeExchange,
+                },
+            }, cancellationToken);
+        }
+
+        // Admin Client（Blazor Server 管理後台）— confidential，Authorization Code + PKCE
+        if (await manager.FindByClientIdAsync("admin-client", cancellationToken) is null)
+        {
+            await manager.CreateAsync(new OpenIddictApplicationDescriptor
+            {
+                ClientId = "admin-client",
+                ClientSecret = "admin-client-secret",
+                ClientType = ClientTypes.Confidential,
+                DisplayName = "Admin Panel",
+                RedirectUris =
+                {
+                    new Uri("https://localhost:7002/signin-oidc"),
+                },
+                PostLogoutRedirectUris =
+                {
+                    new Uri("https://localhost:7002/signout-callback-oidc"),
+                },
+                Permissions =
+                {
+                    Permissions.Endpoints.Authorization,
+                    Permissions.Endpoints.Token,
+                    Permissions.Endpoints.EndSession,
+                    Permissions.GrantTypes.AuthorizationCode,
+                    Permissions.GrantTypes.RefreshToken,
+                    Permissions.ResponseTypes.Code,
+                    Permissions.Scopes.Email,
+                    Permissions.Scopes.Profile,
+                    Permissions.Scopes.Roles,
+                    Permissions.Prefixes.Scope + "offline_access",
                 },
                 Requirements =
                 {

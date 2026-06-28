@@ -1,0 +1,78 @@
+@page "/users"
+@rendermode InteractiveServer
+@inject UserAdminService UserService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@inject NavigationManager Nav
+
+<PageTitle>Users</PageTitle>
+<MudText Typo="Typo.h5" Class="mb-4">Users</MudText>
+
+<MudTable T="UserDetailsViewModel" ServerData="LoadDataAsync" Hover="true" Elevation="4" @ref="_table">
+    <ToolBarContent>
+        <MudSpacer />
+        <MudTextField T="string" ValueChanged="OnSearch" Placeholder="Search by username or email"
+                      Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                      Class="mt-0" />
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTh>Username</MudTh>
+        <MudTh>Email</MudTh>
+        <MudTh>Email Confirmed</MudTh>
+        <MudTh>Locked</MudTh>
+        <MudTh></MudTh>
+        <MudTh></MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd>@context.UserName</MudTd>
+        <MudTd>@context.Email</MudTd>
+        <MudTd>
+            <MudIcon Icon="@(context.EmailConfirmed ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Cancel)"
+                     Color="@(context.EmailConfirmed ? Color.Success : Color.Default)" />
+        </MudTd>
+        <MudTd>
+            <MudIcon Icon="@(context.IsLockedOut ? Icons.Material.Filled.Lock : Icons.Material.Filled.LockOpen)"
+                     Color="@(context.IsLockedOut ? Color.Error : Color.Default)" />
+        </MudTd>
+        <MudTd>
+            <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary"
+                           OnClick='() => Nav.NavigateTo($"/users/edit/{context.Id}")' />
+        </MudTd>
+        <MudTd>
+            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error"
+                           OnClick="() => DeleteAsync(context)" />
+        </MudTd>
+    </RowTemplate>
+    <PagerContent>
+        <MudTablePager PageSizeOptions="@(new[] { 10, 20, 50 })" />
+    </PagerContent>
+</MudTable>
+
+@code {
+    private MudTable<UserDetailsViewModel> _table = default!;
+    private string? _filter;
+
+    private Task<TableData<UserDetailsViewModel>> LoadDataAsync(TableState state, CancellationToken ct)
+    {
+        var (items, total) = UserService.GetPaged(state.Page + 1, state.PageSize, _filter);
+        return Task.FromResult(new TableData<UserDetailsViewModel> { Items = items, TotalItems = total });
+    }
+
+    private void OnSearch(string text)
+    {
+        _filter = string.IsNullOrEmpty(text) ? null : text;
+        _table.ReloadServerData();
+    }
+
+    private async Task DeleteAsync(UserDetailsViewModel user)
+    {
+        var confirmed = await DialogService.ShowMessageBox("Confirm Delete",
+            $"Delete user '{user.UserName}'?", yesText: "Delete", cancelText: "Cancel");
+        if (confirmed == true)
+        {
+            var error = await UserService.DeleteAsync(user.Id);
+            if (error is null) { Snackbar.Add("Deleted.", Severity.Success); await _table.ReloadServerData(); }
+            else Snackbar.Add(error, Severity.Error);
+        }
+    }
+}

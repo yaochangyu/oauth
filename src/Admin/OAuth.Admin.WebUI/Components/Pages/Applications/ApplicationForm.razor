@@ -1,0 +1,186 @@
+@page "/applications/new"
+@page "/applications/edit/{ClientId}"
+@rendermode InteractiveServer
+@inject ApplicationAdminService AppService
+@inject ISnackbar Snackbar
+@inject NavigationManager Nav
+
+<PageTitle>@(ClientId is null ? "New Application" : $"Edit: {ClientId}")</PageTitle>
+<MudText Typo="Typo.h5" Class="mb-4">@(ClientId is null ? "New Application" : $"Edit Application: {ClientId}")</MudText>
+
+@if (_loading)
+{
+    <MudProgressLinear Indeterminate="true" />
+}
+else
+{
+    <MudCard Elevation="4">
+        <MudCardContent>
+            <MudGrid>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_vm.ClientId" Label="Client Id" Required="true"
+                                  Disabled="@(ClientId is not null)" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_vm.DisplayName" Label="Display Name" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudSelect @bind-Value="_vm.ClientType" Label="Client Type" Required="true">
+                        <MudSelectItem Value="@("public")">Public</MudSelectItem>
+                        <MudSelectItem Value="@("confidential")">Confidential</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudSelect @bind-Value="_vm.ConsentType" Label="Consent Type">
+                        <MudSelectItem Value="@("implicit")">Implicit (auto-approve)</MudSelectItem>
+                        <MudSelectItem Value="@("explicit")">Explicit (user consent)</MudSelectItem>
+                        <MudSelectItem Value="@("external")">External</MudSelectItem>
+                        <MudSelectItem Value="@("systematic")">Systematic</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+                @if (_vm.ClientType == "confidential")
+                {
+                    <MudItem xs="12">
+                        <MudTextField @bind-Value="_vm.ClientSecret" Label="Client Secret"
+                                      InputType="InputType.Password"
+                                      HelperText="Leave empty to keep existing secret" />
+                    </MudItem>
+                }
+                <MudItem xs="12">
+                    <MudText Typo="Typo.subtitle1" Class="mb-1">Redirect URIs</MudText>
+                    @for (int i = 0; i < _vm.RedirectUris.Count; i++)
+                    {
+                        var idx = i;
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-1">
+                            <MudTextField Value="_vm.RedirectUris[idx].ToString()"
+                                          ValueChanged="(string v) => _vm.RedirectUris[idx] = new Uri(v, UriKind.RelativeOrAbsolute)"
+                                          Placeholder="https://..." FullWidth="true" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Remove" Color="Color.Error"
+                                           OnClick="() => _vm.RedirectUris.RemoveAt(idx)" Size="Size.Small" />
+                        </MudStack>
+                    }
+                    <MudButton StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Text"
+                               OnClick="AddRedirectUri">
+                        Add Redirect URI
+                    </MudButton>
+                </MudItem>
+                <MudItem xs="12">
+                    <MudText Typo="Typo.subtitle1" Class="mb-1">Post-Logout Redirect URIs</MudText>
+                    @for (int i = 0; i < _vm.PostLogoutRedirectUris.Count; i++)
+                    {
+                        var idx = i;
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-1">
+                            <MudTextField Value="_vm.PostLogoutRedirectUris[idx].ToString()"
+                                          ValueChanged="(string v) => _vm.PostLogoutRedirectUris[idx] = new Uri(v, UriKind.RelativeOrAbsolute)"
+                                          Placeholder="https://..." FullWidth="true" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Remove" Color="Color.Error"
+                                           OnClick="() => _vm.PostLogoutRedirectUris.RemoveAt(idx)" Size="Size.Small" />
+                        </MudStack>
+                    }
+                    <MudButton StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Text"
+                               OnClick="AddPostLogoutUri">
+                        Add Post-Logout URI
+                    </MudButton>
+                </MudItem>
+                <MudItem xs="12">
+                    <MudText Typo="Typo.subtitle1" Class="mb-2">Permissions</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Grant Types</MudText>
+                    @foreach (var (perm, label) in _grantPermissions)
+                    {
+                        <MudCheckBox Value="_vm.Permissions.Contains(perm)"
+                                     ValueChanged="(bool v) => TogglePermission(perm, v)"
+                                     Label="@label" />
+                    }
+                    <MudDivider Class="my-2" />
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Endpoints</MudText>
+                    @foreach (var (perm, label) in _endpointPermissions)
+                    {
+                        <MudCheckBox Value="_vm.Permissions.Contains(perm)"
+                                     ValueChanged="(bool v) => TogglePermission(perm, v)"
+                                     Label="@label" />
+                    }
+                </MudItem>
+                <MudItem xs="12">
+                    <MudCheckBox Value="@_vm.Requirements.Contains("ft:pkce")"
+                                 ValueChanged="@((bool v) => ToggleRequirement("ft:pkce", v))"
+                                 Label="Require PKCE" />
+                </MudItem>
+            </MudGrid>
+        </MudCardContent>
+        <MudCardActions>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveAsync">Save</MudButton>
+            <MudButton Variant="Variant.Text" OnClick='() => Nav.NavigateTo("/applications")'>Cancel</MudButton>
+        </MudCardActions>
+    </MudCard>
+}
+
+@code {
+    [Parameter] public string? ClientId { get; set; }
+
+    private ApplicationViewModel _vm = new();
+    private bool _loading = true;
+
+    private static readonly (string perm, string label)[] _grantPermissions =
+    [
+        ("gt:authorization_code", "Authorization Code"),
+        ("gt:client_credentials", "Client Credentials"),
+        ("gt:refresh_token", "Refresh Token"),
+    ];
+
+    private static readonly (string perm, string label)[] _endpointPermissions =
+    [
+        ("ept:authorization", "Authorization Endpoint"),
+        ("ept:token", "Token Endpoint"),
+        ("ept:logout", "Logout Endpoint"),
+        ("ept:userinfo", "UserInfo Endpoint"),
+        ("ept:revocation", "Revocation Endpoint"),
+        ("ept:introspection", "Introspection Endpoint"),
+    ];
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (ClientId is not null)
+        {
+            var existing = await AppService.GetByClientIdAsync(ClientId);
+            if (existing is not null) _vm = existing;
+        }
+        _loading = false;
+    }
+
+    private void AddRedirectUri() =>
+        _vm.RedirectUris.Add(new Uri("https://", UriKind.RelativeOrAbsolute));
+
+    private void AddPostLogoutUri() =>
+        _vm.PostLogoutRedirectUris.Add(new Uri("https://", UriKind.RelativeOrAbsolute));
+
+    private void TogglePermission(string perm, bool add)
+    {
+        if (add) { if (!_vm.Permissions.Contains(perm)) _vm.Permissions.Add(perm); }
+        else _vm.Permissions.Remove(perm);
+    }
+
+    private void ToggleRequirement(string req, bool add)
+    {
+        if (add) { if (!_vm.Requirements.Contains(req)) _vm.Requirements.Add(req); }
+        else _vm.Requirements.Remove(req);
+    }
+
+    private async Task SaveAsync()
+    {
+        string? error;
+        if (ClientId is null)
+            error = await AppService.CreateAsync(_vm);
+        else
+            error = await AppService.UpdateAsync(_vm);
+
+        if (error is null)
+        {
+            Snackbar.Add("Saved successfully.", Severity.Success);
+            Nav.NavigateTo("/applications");
+        }
+        else
+        {
+            Snackbar.Add(error, Severity.Error);
+        }
+    }
+}

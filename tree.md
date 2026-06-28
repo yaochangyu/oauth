@@ -17,7 +17,7 @@
 │   │   │   │   ├── TokenController.cs                # POST /connect/token
 │   │   │   │   └── UserInfoController.cs             # GET /connect/userinfo
 │   │   │   ├── Infrastructure/
-│   │   │   │   ├── OpenIddictDataSeeder.cs            # Seed：SPA/MVC/WebAPI/Postman Client
+│   │   │   │   ├── OpenIddictDataSeeder.cs            # Seed：SPA/MVC/WebAPI/Postman/Admin Client
 │   │   │   │   └── Threads/
 │   │   │   │       ├── ThreadsAuthenticationDefaults.cs
 │   │   │   │       ├── ThreadsAuthenticationExtensions.cs
@@ -33,6 +33,22 @@
 │   │       ├── Migrations/                           # EF Core Migrations
 │   │       ├── ApplicationDbContext.cs               # IdentityDbContext + OpenIddict
 │   │       └── ApplicationUser.cs                    # IdentityUser + DisplayName + AvatarUrl
+│   ├── Admin/
+│   │   └── OAuth.Admin.WebUI/                        # Blazor Server 管理後台（port 7002）
+│   │       ├── Components/
+│   │       │   ├── Layout/                           # MainLayout（MudBlazor）+ NavMenu
+│   │       │   └── Pages/
+│   │       │       ├── Applications/                 # Application 清單、新增、編輯
+│   │       │       ├── Scopes/                       # Scope 清單、新增、編輯
+│   │       │       ├── Users/                        # User 清單、編輯（鎖定/角色）
+│   │       │       └── Roles/                        # Role 清單、新增、刪除
+│   │       ├── Services/                             # Admin 服務（直接呼叫 OpenIddict managers）
+│   │       │   ├── ApplicationAdminService.cs
+│   │       │   ├── ScopeAdminService.cs
+│   │       │   ├── UserAdminService.cs
+│   │       │   └── RoleAdminService.cs
+│   │       ├── ViewModels/                           # 移植自 pixel-identity
+│   │       └── Program.cs
 │   └── Clients/
 │       ├── OAuth.Client.Mvc/                         # MVC 示範客戶端（Cookie SSO，port 5101）
 │       │   ├── Controllers/
@@ -63,14 +79,16 @@
 │   │   └── TestServer.cs                            # WebApplicationFactory
 │   └── OAuth.E2E.WebwrightTest/                     # E2E 測試（Webwright SSO 互動驗證）
 ├── doc/
+│   ├── diagrams.md                                  # 核心授權流程與憑證狀態設計文件
 │   └── openapi.yml                                  # OpenAPI 規格（完整）
 ├── .archive/                                        # 已完成的計畫書封存
+│   ├── diagrams.plan.md                             # 循序圖與憑證狀態機設計計畫（已完成，封存）
+│   └── oauth-oidc-server.plan.md                    # 實作計畫書（已完成，封存）
 ├── .issues/                                         # 問題記錄
+│   └── diagrams.issues.md                           # 建置驗證失敗記錄
 ├── docker-compose.yml                               # PostgreSQL 16 + Seq
 ├── Taskfile.yml                                     # 開發指令集中管理
 ├── .gitignore
 ├── OAuth.slnx                                       # Solution（.NET 10 新格式）
-├── .archive/
-│   └── oauth-oidc-server.plan.md                    # 實作計畫書（已完成，封存）
 └── tree.md                                          # 本檔案
 ```

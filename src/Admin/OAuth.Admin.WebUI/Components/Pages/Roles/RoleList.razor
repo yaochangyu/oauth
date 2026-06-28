@@ -1,0 +1,81 @@
+@page "/roles"
+@rendermode InteractiveServer
+@inject RoleAdminService RoleService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<PageTitle>Roles</PageTitle>
+<MudText Typo="Typo.h5" Class="mb-4">Roles</MudText>
+
+<MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-3">
+    <MudTextField @bind-Value="_newRole" Label="New Role Name" Style="max-width:300px" />
+    <MudButton Variant="Variant.Filled" Color="Color.Primary"
+               StartIcon="@Icons.Material.Filled.Add"
+               OnClick="CreateAsync">Add Role</MudButton>
+</MudStack>
+
+<MudTable T="UserRoleViewModel" ServerData="LoadDataAsync" Hover="true" Elevation="4" @ref="_table">
+    <ToolBarContent>
+        <MudSpacer />
+        <MudTextField T="string" ValueChanged="OnSearch" Placeholder="Search"
+                      Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                      Class="mt-0" />
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTh>Role Name</MudTh>
+        <MudTh></MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd>@context.RoleName</MudTd>
+        <MudTd>
+            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error"
+                           OnClick="() => DeleteAsync(context.RoleName)" />
+        </MudTd>
+    </RowTemplate>
+    <PagerContent>
+        <MudTablePager PageSizeOptions="@(new[] { 10, 20, 50 })" />
+    </PagerContent>
+</MudTable>
+
+@code {
+    private MudTable<UserRoleViewModel> _table = default!;
+    private string? _filter;
+    private string _newRole = string.Empty;
+
+    private Task<TableData<UserRoleViewModel>> LoadDataAsync(TableState state, CancellationToken ct)
+    {
+        var (items, total) = RoleService.GetPaged(state.Page + 1, state.PageSize, _filter);
+        return Task.FromResult(new TableData<UserRoleViewModel> { Items = items, TotalItems = total });
+    }
+
+    private void OnSearch(string text)
+    {
+        _filter = string.IsNullOrEmpty(text) ? null : text;
+        _table.ReloadServerData();
+    }
+
+    private async Task CreateAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_newRole)) return;
+        var error = await RoleService.CreateAsync(_newRole.Trim());
+        if (error is null)
+        {
+            Snackbar.Add($"Role '{_newRole}' created.", Severity.Success);
+            _newRole = string.Empty;
+            await _table.ReloadServerData();
+        }
+        else Snackbar.Add(error, Severity.Error);
+    }
+
+    private async Task DeleteAsync(string roleName)
+    {
+        var confirmed = await DialogService.ShowMessageBox("Confirm Delete",
+            $"Delete role '{roleName}'?", yesText: "Delete", cancelText: "Cancel");
+        if (confirmed == true)
+        {
+            var error = await RoleService.DeleteAsync(roleName);
+            if (error is null) { Snackbar.Add("Deleted.", Severity.Success); await _table.ReloadServerData(); }
+            else Snackbar.Add(error, Severity.Error);
+        }
+    }
+}

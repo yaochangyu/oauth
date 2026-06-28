@@ -1,0 +1,35 @@
+﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+
+namespace OAuth.Admin.WebUI.ViewModels
+{
+    public class UserRoleViewModel
+    {
+        [Required(AllowEmptyStrings = true)]
+        public string RoleId { get; set; } = string.Empty;
+
+        [Required]       
+        public string RoleName { get; set; } = string.Empty;
+
+        [Required]       
+        public List<ClaimViewModel> Claims { get; set; } = new List<ClaimViewModel>();
+
+        public bool Exists => !string.IsNullOrEmpty(RoleId);
+
+        public UserRoleViewModel()
+        {
+
+        }
+
+        public UserRoleViewModel(string roleName)
+        {
+            this.RoleId = string.Empty;
+            this.RoleName = roleName;
+        }
+
+        public UserRoleViewModel(string roleId, string roleName) : this(roleName)
+        {
+            this.RoleId = roleId;         
+        }
+    }
+}

@@ -1,0 +1,65 @@
+﻿@page "/"
+@rendermode InteractiveServer
+
+<PageTitle>OAuth Admin Dashboard</PageTitle>
+
+<MudText Typo="Typo.h5" Class="mb-4">Dashboard</MudText>
+
+<MudGrid>
+    <MudItem xs="12" sm="6" md="3">
+        <MudCard Elevation="4">
+            <MudCardContent Class="d-flex align-center">
+                <MudIcon Icon="@Icons.Material.Filled.Apps" Color="Color.Primary" Class="mr-3" Style="font-size:2rem" />
+                <div>
+                    <MudText Typo="Typo.h6">Applications</MudText>
+                    <MudText Typo="Typo.caption">Manage OAuth Clients</MudText>
+                </div>
+            </MudCardContent>
+            <MudCardActions>
+                <MudButton Href="/applications" Color="Color.Primary">View All</MudButton>
+            </MudCardActions>
+        </MudCard>
+    </MudItem>
+    <MudItem xs="12" sm="6" md="3">
+        <MudCard Elevation="4">
+            <MudCardContent Class="d-flex align-center">
+                <MudIcon Icon="@Icons.Material.Filled.Security" Color="Color.Secondary" Class="mr-3" Style="font-size:2rem" />
+                <div>
+                    <MudText Typo="Typo.h6">Scopes</MudText>
+                    <MudText Typo="Typo.caption">Manage OAuth Scopes</MudText>
+                </div>
+            </MudCardContent>
+            <MudCardActions>
+                <MudButton Href="/scopes" Color="Color.Secondary">View All</MudButton>
+            </MudCardActions>
+        </MudCard>
+    </MudItem>
+    <MudItem xs="12" sm="6" md="3">
+        <MudCard Elevation="4">
+            <MudCardContent Class="d-flex align-center">
+                <MudIcon Icon="@Icons.Material.Filled.Person" Color="Color.Tertiary" Class="mr-3" Style="font-size:2rem" />
+                <div>
+                    <MudText Typo="Typo.h6">Users</MudText>
+                    <MudText Typo="Typo.caption">Manage Identity Users</MudText>
+                </div>
+            </MudCardContent>
+            <MudCardActions>
+                <MudButton Href="/users" Color="Color.Tertiary">View All</MudButton>
+            </MudCardActions>
+        </MudCard>
+    </MudItem>
+    <MudItem xs="12" sm="6" md="3">
+        <MudCard Elevation="4">
+            <MudCardContent Class="d-flex align-center">
+                <MudIcon Icon="@Icons.Material.Filled.AdminPanelSettings" Color="Color.Warning" Class="mr-3" Style="font-size:2rem" />
+                <div>
+                    <MudText Typo="Typo.h6">Roles</MudText>
+                    <MudText Typo="Typo.caption">Manage User Roles</MudText>
+                </div>
+            </MudCardContent>
+            <MudCardActions>
+                <MudButton Href="/roles" Color="Color.Warning">View All</MudButton>
+            </MudCardActions>
+        </MudCard>
+    </MudItem>
+</MudGrid>

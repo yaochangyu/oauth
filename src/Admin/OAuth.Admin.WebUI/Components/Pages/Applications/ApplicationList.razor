@@ -1,0 +1,91 @@
+@page "/applications"
+@rendermode InteractiveServer
+@inject ApplicationAdminService AppService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@inject NavigationManager Nav
+
+<PageTitle>Applications</PageTitle>
+
+<MudText Typo="Typo.h5" Class="mb-4">OAuth Applications</MudText>
+
+<MudTable T="ApplicationViewModel"
+          ServerData="LoadDataAsync"
+          Dense="false" Hover="true" Elevation="4"
+          @ref="_table">
+    <ToolBarContent>
+        <MudIconButton Icon="@Icons.Material.Outlined.AddCircleOutline"
+                       Size="Size.Medium" Color="Color.Primary"
+                       OnClick='() => Nav.NavigateTo("/applications/new")' />
+        <MudSpacer />
+        <MudTextField T="string" ValueChanged="OnSearch"
+                      Placeholder="Search by Client Id or Display Name"
+                      Adornment="Adornment.Start"
+                      AdornmentIcon="@Icons.Material.Filled.Search"
+                      IconSize="Size.Medium" Class="mt-0" />
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTh>Client Id</MudTh>
+        <MudTh>Display Name</MudTh>
+        <MudTh>Consent Type</MudTh>
+        <MudTh>Client Type</MudTh>
+        <MudTh></MudTh>
+        <MudTh></MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd>@context.ClientId</MudTd>
+        <MudTd>@context.DisplayName</MudTd>
+        <MudTd>@context.ConsentType</MudTd>
+        <MudTd>@context.ClientType</MudTd>
+        <MudTd>
+            <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary"
+                           OnClick='() => Nav.NavigateTo($"/applications/edit/{context.ClientId}")' />
+        </MudTd>
+        <MudTd>
+            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error"
+                           OnClick="() => DeleteAsync(context)" />
+        </MudTd>
+    </RowTemplate>
+    <PagerContent>
+        <MudTablePager PageSizeOptions="@(new[] { 10, 20, 50 })" />
+    </PagerContent>
+</MudTable>
+
+@code {
+    private MudTable<ApplicationViewModel> _table = default!;
+    private string? _filter;
+
+    private async Task<TableData<ApplicationViewModel>> LoadDataAsync(TableState state, CancellationToken ct)
+    {
+        var (items, total) = await AppService.GetPagedAsync(state.Page + 1, state.PageSize, _filter);
+        return new TableData<ApplicationViewModel> { Items = items, TotalItems = total };
+    }
+
+    private void OnSearch(string text)
+    {
+        _filter = string.IsNullOrEmpty(text) ? null : text;
+        _table.ReloadServerData();
+    }
+
+    private async Task DeleteAsync(ApplicationViewModel app)
+    {
+        var confirmed = await DialogService.ShowMessageBox(
+            "Confirm Delete", $"Delete '{app.ClientId}'? This cannot be undone.",
+            yesText: "Delete", cancelText: "Cancel",
+            options: new DialogOptions { FullWidth = true });
+
+        if (confirmed == true)
+        {
+            var error = await AppService.DeleteAsync(app.ClientId);
+            if (error is null)
+            {
+                Snackbar.Add("Deleted.", Severity.Success);
+                await _table.ReloadServerData();
+            }
+            else
+            {
+                Snackbar.Add(error, Severity.Error);
+            }
+        }
+    }
+}

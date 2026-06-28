@@ -1,0 +1,72 @@
+@page "/scopes"
+@rendermode InteractiveServer
+@inject ScopeAdminService ScopeService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@inject NavigationManager Nav
+
+<PageTitle>Scopes</PageTitle>
+<MudText Typo="Typo.h5" Class="mb-4">OAuth Scopes</MudText>
+
+<MudTable T="ScopeViewModel" ServerData="LoadDataAsync" Hover="true" Elevation="4" @ref="_table">
+    <ToolBarContent>
+        <MudIconButton Icon="@Icons.Material.Outlined.AddCircleOutline" Color="Color.Primary"
+                       OnClick='() => Nav.NavigateTo("/scopes/new")' />
+        <MudSpacer />
+        <MudTextField T="string" ValueChanged="OnSearch" Placeholder="Search"
+                      Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                      Class="mt-0" />
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTh>Name</MudTh>
+        <MudTh>Display Name</MudTh>
+        <MudTh>Description</MudTh>
+        <MudTh></MudTh>
+        <MudTh></MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd>@context.Name</MudTd>
+        <MudTd>@context.DisplayName</MudTd>
+        <MudTd>@context.Description</MudTd>
+        <MudTd>
+            <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary"
+                           OnClick='() => Nav.NavigateTo($"/scopes/edit/{context.Id}")' />
+        </MudTd>
+        <MudTd>
+            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error"
+                           OnClick="() => DeleteAsync(context)" />
+        </MudTd>
+    </RowTemplate>
+    <PagerContent>
+        <MudTablePager PageSizeOptions="@(new[] { 10, 20, 50 })" />
+    </PagerContent>
+</MudTable>
+
+@code {
+    private MudTable<ScopeViewModel> _table = default!;
+    private string? _filter;
+
+    private async Task<TableData<ScopeViewModel>> LoadDataAsync(TableState state, CancellationToken ct)
+    {
+        var (items, total) = await ScopeService.GetPagedAsync(state.Page + 1, state.PageSize, _filter);
+        return new TableData<ScopeViewModel> { Items = items, TotalItems = total };
+    }
+
+    private void OnSearch(string text)
+    {
+        _filter = string.IsNullOrEmpty(text) ? null : text;
+        _table.ReloadServerData();
+    }
+
+    private async Task DeleteAsync(ScopeViewModel scope)
+    {
+        var confirmed = await DialogService.ShowMessageBox("Confirm Delete",
+            $"Delete scope '{scope.Name}'?", yesText: "Delete", cancelText: "Cancel");
+        if (confirmed == true)
+        {
+            var error = await ScopeService.DeleteAsync(scope.Id);
+            if (error is null) { Snackbar.Add("Deleted.", Severity.Success); await _table.ReloadServerData(); }
+            else Snackbar.Add(error, Severity.Error);
+        }
+    }
+}

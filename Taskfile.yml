@@ -3,6 +3,7 @@ version: "3"
 vars:
   AUTHSERVER_PROJECT: src/AuthServer/OAuth.AuthServer.WebAPI/OAuth.AuthServer.WebAPI.csproj
   DB_PROJECT: src/AuthServer/OAuth.AuthServer.DB/OAuth.AuthServer.DB.csproj
+  ADMIN_PROJECT: src/Admin/OAuth.Admin.WebUI/OAuth.Admin.WebUI.csproj
   INTEGRATION_TEST_PROJECT: test/OAuth.AuthServer.IntegrationTest/OAuth.AuthServer.IntegrationTest.csproj
   E2E_TEST_PROJECT: test/OAuth.E2E.WebwrightTest/OAuth.E2E.WebwrightTest.csproj
 
@@ -10,7 +11,7 @@ tasks:
   build:
     desc: "建置整個解決方案"
     cmds:
-      - dotnet build OAuth.sln -c Release
+      - dotnet build OAuth.slnx -c Release
 
   test-integration:
     desc: "執行 BDD 整合測試（需要 Docker）"
@@ -42,6 +43,11 @@ tasks:
     desc: "開發模式啟動 WebAPI Client"
     cmds:
       - dotnet run --project src/Clients/OAuth.Client.WebAPI/OAuth.Client.WebAPI.csproj --environment Development
+
+  admin-dev:
+    desc: "開發模式啟動 Admin UI（https://localhost:7002）"
+    cmds:
+      - dotnet run --project {{.ADMIN_PROJECT}} --environment Development
 
   ef-migration-add:
     desc: "新增 EF Core Migration（用法：task ef-migration-add NAME=MigrationName）"

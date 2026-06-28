@@ -1,0 +1,52 @@
+using OAuth.Admin.WebUI.ViewModels;
+﻿
+using System.ComponentModel.DataAnnotations;
+using System.Runtime.Serialization;
+
+namespace OAuth.Admin.WebUI.Requests
+{
+    [DataContract]
+    public class UpdateClaimRequest
+    {
+        // <summary>
+        /// User or Role on which claim details should be updated
+        /// </summary>
+        [Required]
+        [DataMember(IsRequired = true)]
+        public string Owner { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Claim to add to the role
+        /// </summary>
+        [Required]
+        [DataMember(IsRequired = true)]
+        public ClaimViewModel Original { get; set; } = default!;
+
+        /// <summary>
+        /// Claim to add to the role
+        /// </summary>
+        [Required]
+        [DataMember(IsRequired = true)]
+        public ClaimViewModel Modified { get; set; } = default!;
+
+        /// <summary>
+        /// constructor
+        /// </summary>
+        public UpdateClaimRequest()
+        {
+
+        }
+
+        /// <summary>
+        /// constructor
+        /// </summary>
+        /// <param name="owner"></param>
+        /// <param name="claimToAdd"></param>
+        public UpdateClaimRequest(string owner, ClaimViewModel original, ClaimViewModel modified)
+        {
+            this.Owner = owner;
+            this.Original = original;
+            this.Modified = modified;
+        }
+    }
+}

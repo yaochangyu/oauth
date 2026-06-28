@@ -1,0 +1,82 @@
+@page "/scopes/new"
+@page "/scopes/edit/{Id}"
+@rendermode InteractiveServer
+@inject ScopeAdminService ScopeService
+@inject ISnackbar Snackbar
+@inject NavigationManager Nav
+
+<PageTitle>@(Id is null ? "New Scope" : "Edit Scope")</PageTitle>
+<MudText Typo="Typo.h5" Class="mb-4">@(Id is null ? "New Scope" : $"Edit Scope: {_vm.Name}")</MudText>
+
+@if (_loading)
+{
+    <MudProgressLinear Indeterminate="true" />
+}
+else
+{
+    <MudCard Elevation="4">
+        <MudCardContent>
+            <MudGrid>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_vm.Name" Label="Name" Required="true"
+                                  Disabled="@(Id is not null)" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_vm.DisplayName" Label="Display Name" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="_vm.Description" Label="Description" Lines="2" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudText Typo="Typo.subtitle1" Class="mb-1">Resources</MudText>
+                    @for (int i = 0; i < _vm.Resources.Count; i++)
+                    {
+                        var idx = i;
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-1">
+                            <MudTextField Value="_vm.Resources[idx]"
+                                          ValueChanged="(string v) => _vm.Resources[idx] = v"
+                                          Placeholder="resource name" FullWidth="true" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Remove" Color="Color.Error"
+                                           OnClick="() => _vm.Resources.RemoveAt(idx)" Size="Size.Small" />
+                        </MudStack>
+                    }
+                    <MudButton StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Text"
+                               OnClick="() => _vm.Resources.Add(string.Empty)">
+                        Add Resource
+                    </MudButton>
+                </MudItem>
+            </MudGrid>
+        </MudCardContent>
+        <MudCardActions>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveAsync">Save</MudButton>
+            <MudButton Variant="Variant.Text" OnClick='() => Nav.NavigateTo("/scopes")'>Cancel</MudButton>
+        </MudCardActions>
+    </MudCard>
+}
+
+@code {
+    [Parameter] public string? Id { get; set; }
+
+    private ScopeViewModel _vm = new();
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Id is not null)
+        {
+            var existing = await ScopeService.GetByIdAsync(Id);
+            if (existing is not null) _vm = existing;
+        }
+        _loading = false;
+    }
+
+    private async Task SaveAsync()
+    {
+        string? error = Id is null
+            ? await ScopeService.CreateAsync(_vm)
+            : await ScopeService.UpdateAsync(_vm);
+
+        if (error is null) { Snackbar.Add("Saved.", Severity.Success); Nav.NavigateTo("/scopes"); }
+        else Snackbar.Add(error, Severity.Error);
+    }
+}
