@@ -121,3 +121,10 @@ tasks:
     desc: "停止 Docker 服務"
     cmds:
       - docker compose down
+
+  docker-clean:
+    desc: "停止並移除所有容器與 Volume（資料會清空）"
+    cmds:
+      - docker stop oauth_postgres oauth_seq 2>/dev/null || true
+      - docker rm oauth_postgres oauth_seq 2>/dev/null || true
+      - docker compose down -v --remove-orphans
