@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 using OAuth.AuthServer.DB;
 using OpenIddict.Abstractions;
 using OpenIddict.Server.AspNetCore;
@@ -12,7 +14,9 @@ namespace OAuth.AuthServer.WebAPI.Connect;
 
 [ApiController]
 public class AuthorizationController(
-    UserManager<ApplicationUser> userManager) : ControllerBase
+    UserManager<ApplicationUser> userManager,
+    IOpenIddictApplicationManager applicationManager,
+    IMemoryCache cache) : ControllerBase
 {
     [HttpGet("~/connect/authorize")]
     [HttpPost("~/connect/authorize")]
@@ -26,6 +30,49 @@ public class AuthorizationController(
         {
             var returnUrl = Request.PathBase + Request.Path + Request.QueryString;
             return Redirect($"/Account/Login?returnUrl={Uri.EscapeDataString(returnUrl)}");
+        }
+
+        // Consent check: null 或未設定視同 explicit
+        var application = await applicationManager.FindByClientIdAsync(request.ClientId!);
+        var consentType = await applicationManager.GetConsentTypeAsync(application!);
+
+        if (string.IsNullOrEmpty(consentType) || consentType == ConsentTypes.Explicit)
+        {
+            var consentToken = Request.Query["__ct"].ToString();
+            var consentDecision = string.Empty;
+            var consentClientId = string.Empty;
+
+            if (!string.IsNullOrEmpty(consentToken) &&
+                cache.TryGetValue($"consent:{consentToken}", out string? tokenValue) &&
+                tokenValue is not null)
+            {
+                cache.Remove($"consent:{consentToken}");
+                var parts = tokenValue.Split(':', 2);
+                consentDecision = parts[0];
+                consentClientId = parts.Length > 1 ? parts[1] : string.Empty;
+            }
+
+            if (consentDecision == "denied" && consentClientId == request.ClientId)
+            {
+                return Forbid(
+                    authenticationSchemes: OpenIddictServerAspNetCoreDefaults.AuthenticationScheme,
+                    properties: new AuthenticationProperties(new Dictionary<string, string?>
+                    {
+                        [OpenIddictServerAspNetCoreConstants.Properties.Error] = Errors.AccessDenied,
+                        [OpenIddictServerAspNetCoreConstants.Properties.ErrorDescription] = "The authorization was denied by the user.",
+                    }));
+            }
+
+            if (consentDecision != "granted" || consentClientId != request.ClientId)
+            {
+                // 去除舊的 __ct，避免 returnUrl 帶過期 token
+                var cleanQs = QueryString.Create(
+                    Request.Query
+                        .Where(kvp => kvp.Key != "__ct")
+                        .Select(kvp => new KeyValuePair<string, string?>(kvp.Key, kvp.Value.ToString())));
+                var returnUrl = Request.Path + cleanQs;
+                return Redirect($"/Connect/Consent?returnUrl={Uri.EscapeDataString(returnUrl)}");
+            }
         }
 
         var user = await userManager.GetUserAsync(result.Principal)

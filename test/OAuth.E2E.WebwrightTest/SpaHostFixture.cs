@@ -8,9 +8,9 @@ namespace OAuth.E2E.WebwrightTest;
 /// </summary>
 public sealed class SpaHostFixture : IAsyncLifetime
 {
-    private const string SpaBase      = "https://localhost:5200";
-    private const string AdminUser    = "admin";
-    private const string AdminPass    = "Admin@123456";
+    private static string SpaBase      => TestSettings.SpaHostBase;
+    private static string AdminUser    => TestSettings.AdminUserName;
+    private static string AdminPass    => TestSettings.AdminPassword;
 
     private IPlaywright? _playwright;
     private IBrowser?    _browser;

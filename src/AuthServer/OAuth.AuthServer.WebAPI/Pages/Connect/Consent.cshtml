@@ -1,0 +1,29 @@
+@page "/Connect/Consent"
+@model OAuth.AuthServer.WebAPI.Pages.Connect.ConsentModel
+@{
+    ViewData["Title"] = "授權請求";
+}
+
+<h2>授權請求</h2>
+<p><strong>@Model.ClientDisplayName</strong> 請求存取以下資源：</p>
+
+<ul data-testid="scope-list">
+    @foreach (var scope in Model.Scopes)
+    {
+        <li>@scope</li>
+    }
+</ul>
+
+<form method="post" action="/Connect/Consent?handler=Accept">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="ReturnUrl" value="@Model.ReturnUrl" />
+    <input type="hidden" name="ClientId" value="@Model.ClientId" />
+    <button type="submit" value="accept">同意</button>
+</form>
+
+<form method="post" action="/Connect/Consent?handler=Deny">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="ReturnUrl" value="@Model.ReturnUrl" />
+    <input type="hidden" name="ClientId" value="@Model.ClientId" />
+    <button type="submit" value="deny">拒絕</button>
+</form>
