@@ -16,9 +16,9 @@ public class AdminUserSeeder(IServiceProvider serviceProvider) : IHostedService
             await roleManager.CreateAsync(new IdentityRole("admin"));
         }
 
-        const string userName = "yao";
-        const string email    = "yao@localhost";
-        const string password = "Aa123456";
+        const string userName = "admin";
+        const string email    = "admin@localhost";
+        const string password = "Admin@123456";
 
         if (await userManager.FindByNameAsync(userName) is null)
         {
