@@ -115,7 +115,7 @@ tasks:
   docker-up:
     desc: "啟動 Docker 服務（PostgreSQL + Seq）"
     cmds:
-      - docker compose up -d
+      - docker compose up -d || docker start oauth_postgres oauth_seq
 
   docker-down:
     desc: "停止 Docker 服務"
