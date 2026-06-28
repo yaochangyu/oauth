@@ -22,8 +22,8 @@ task docker-up
 task ef-database-update
 
 # 3. 啟動各服務（各自開 terminal）
-task api-dev              # AuthServer      https://localhost:7001
-task admin-dev            # Admin UI        https://localhost:7002
+task authserver-dev           # AuthServer      https://localhost:7001
+task authserver-admin-ui-dev  # Admin UI        https://localhost:7002
 task client-mvc-dev       # MVC Client      https://localhost:5101
 task client-api-dev       # WebAPI Client   https://localhost:5102
 task client-spa-dev       # SPA (Vue)       http://localhost:5173

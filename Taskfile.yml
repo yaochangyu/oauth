@@ -40,14 +40,14 @@ tasks:
       - task: test-e2e
 
   # ── 個別服務啟動（前台，適合單獨開 terminal 除錯）────────────────────────────
-  api-dev:
+  authserver-dev:
     desc: "啟動 AuthServer（https://localhost:7001）；自動啟動 Docker + Migration"
     deps: [setup]
     cmds:
       - dotnet run --project {{.AUTHSERVER_PROJECT}} --launch-profile https
 
-  admin-dev:
-    desc: "啟動 Admin UI（https://localhost:7002）；自動啟動 Docker + Migration"
+  authserver-admin-ui-dev:
+    desc: "啟動 AuthServer Admin UI（https://localhost:7002）；自動啟動 Docker + Migration"
     deps: [setup]
     cmds:
       - dotnet run --project {{.ADMIN_PROJECT}} --launch-profile https
