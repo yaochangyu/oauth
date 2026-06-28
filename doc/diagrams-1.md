@@ -17,7 +17,7 @@ sequenceDiagram
     participant DB as 資料庫 (Identity + OpenIddict)
 
     User->>Client: 點擊登入
-    Note over Client: 產生 code_verifier<br/>與 code_challenge (S256)
+    Note over Client: 產生 code_verifier 與 code_challenge (S256)
     Client->>AS: 導向 /connect/authorize?code_challenge=...&code_challenge_method=S256
     AS->>User: 顯示登入頁面 (Authorize.cshtml)
     User->>AS: 輸入本地帳號密碼
@@ -75,7 +75,7 @@ sequenceDiagram
     participant AS as 授權伺服器 (AuthServer)
     participant DB as 資料庫 (OpenIddict)
 
-    Client->>AS: POST /connect/token<br/>(grant_type=client_credentials, client_id, client_secret)
+    Client->>AS: POST /connect/token (grant_type=client_credentials, client_id, client_secret)
     AS->>DB: 驗證 Client ID & Client Secret
     DB-->>AS: 驗證通過
     AS->>DB: 記錄並發行 Token
@@ -89,35 +89,39 @@ sequenceDiagram
 
 本專案基於 OpenIddict 實作，其 Token 生產與輪替的狀態流轉如下：
 
+### 2.1. Authorization Code 狀態機
+
 ```mermaid
 stateDiagram-v2
-    [*] --> AuthCode_Created : 使用者登入授權成功
+    [*] --> Created : 使用者登入授權成功
+    Created --> Exchanged : POST /connect/token 交換成功
+    Created --> Expired : 超過有效期（未交換）
+    Exchanged --> [*] : 標記為無效且刪除
+    Expired --> [*] : 清理過期資料
+```
 
-    state "Authorization Code" as AuthCode {
-        AuthCode_Created --> AuthCode_Exchanged : POST /connect/token 交換成功
-        AuthCode_Created --> AuthCode_Expired : 超過有效期 (未交換)
-        AuthCode_Exchanged --> [*] : 標記為無效且刪除
-        AuthCode_Expired --> [*] : 清理過期資料
-    }
+### 2.2. Access Token 狀態機
 
-    [*] --> AccessToken_Active : Token 交換或 Client Credentials 流程成功
-    state "Access Token" as AccessToken {
-        AccessToken_Active --> AccessToken_Expired : 達到生命週期 (15 分鐘)
-        AccessToken_Expired --> [*] : 清理或拒絕接收
-    }
+```mermaid
+stateDiagram-v2
+    [*] --> Active : Token 交換或 Client Credentials 流程成功
+    Active --> Expired : 達到生命週期（15 分鐘）
+    Expired --> [*] : 清理或拒絕存取
+```
 
-    [*] --> RefreshToken_Active : 隨 Auth Code 交換發放 (具有 offline_access)
-    state "Refresh Token (Rotation)" as RefreshToken {
-        RefreshToken_Active --> RefreshToken_Rotated : 使用此 Token 成功換發新 Token
-        RefreshToken_Active --> RefreshToken_Revoked : 使用者登出 (/connect/endsession) 或主動撤銷
-        RefreshToken_Active --> RefreshToken_Expired : 超過滑動過期限制 (30 天)
-        
-        RefreshToken_Rotated --> [*] : 立即失效，不可再次使用
-        RefreshToken_Revoked --> [*] : 標記為 Revoked，不可再次使用
-        RefreshToken_Expired --> [*] : 標記為 Expired，不可再次使用
-    }
-    
-    note right of RefreshToken_Rotated : 若偵測到重複使用已 Rotated 的舊 Refresh Token，授權伺服器將拒絕請求 (invalid_grant)。
+### 2.3. Refresh Token 狀態機（含 Rotation）
+
+```mermaid
+stateDiagram-v2
+    [*] --> Active : 隨 Auth Code 交換發放（具有 offline_access）
+    Active --> Rotated : 使用此 Token 成功換發新 Token
+    Active --> Revoked : 使用者登出（/connect/endsession）或主動撤銷
+    Active --> Expired : 超過滑動過期限制（30 天）
+    Rotated --> [*] : 立即失效，不可再次使用
+    Revoked --> [*] : 標記為 Revoked，不可再次使用
+    Expired --> [*] : 標記為 Expired，不可再次使用
+
+    note right of Rotated : 若偵測到重複使用已 Rotated 的舊 Token，授權伺服器將拒絕請求 (invalid_grant)
 ```
 
 ---
@@ -126,30 +130,36 @@ stateDiagram-v2
 
 為確保憑證安全性，避免 API 金鑰與個人 token 落地外洩，本專案依循 DevOps 憑證安全規範管理如下：
 
+### 3.1. 個人測試憑證 (creds)
+
 ```mermaid
 stateDiagram-v2
-    state "個人測試憑證 (creds)" as LocalCreds {
-        [*] --> Creds_Created : 於本機手動建立
-        Creds_Created --> Creds_Stored : 集中存放於 ~/.claude/creds/.creds (不進 git)
-        Creds_Stored --> Creds_InUse : 驅動 Playwright E2E 測試與 Social Login 測試
-        Creds_Stored --> Creds_Rotated : 變更測試帳密時更新
-        Creds_Stored --> Creds_Deleted : 測試帳號廢棄
-    }
+    [*] --> Created : 於本機手動建立
+    Created --> Stored : 集中存放於 ~/.claude/creds/.creds（不進 git）
+    Stored --> InUse : 驅動 Playwright E2E 測試與 Social Login 測試
+    Stored --> Rotated : 變更測試帳密時更新
+    Stored --> Deleted : 測試帳號廢棄
+```
 
-    state "Git HTTPS 憑證" as GitCreds {
-        [*] --> Git_Token_Issued : GitLab/GitHub 核發 Personal Access Token
-        Git_Token_Issued --> Git_Helper_Configured : 設定 git credential helper (不寫入 Remote URL)
-        Git_Helper_Configured --> Git_Clean_URL : "remote 保持 https://host/repo.git"
-        Git_Clean_URL --> Git_Helper_Authed : 執行 git 指令時由 helper 自動注入憑證
-        Git_Helper_Authed --> Git_Token_Expired : Token 逾期或輪替
-        Git_Helper_Authed --> Git_Token_Revoked : 主動註銷 Token
-    }
+### 3.2. Git HTTPS 憑證
 
-    state "Social Login Client Secret" as SocialSecrets {
-        [*] --> Secret_Generated : 於 Google/Line 等開發者後台產生
-        Secret_Generated --> Secret_Local_Configured : 寫入 appsettings.Development.json (不進 git)
-        Secret_Local_Configured --> Secret_In_Memory : 服務啟動時載入記憶體
-        Secret_In_Memory --> Secret_OIDC_Handshake : 與 OAuth Provider 進行後台 Token 交換驗證
-        Secret_In_Memory --> Secret_Rotated : 金鑰外洩或定期重啟時更新
-    }
+```mermaid
+stateDiagram-v2
+    [*] --> Issued : GitLab/GitHub 核發 Personal Access Token
+    Issued --> HelperConfigured : 設定 git credential helper（不寫入 Remote URL）
+    HelperConfigured --> CleanURL : remote 保持 https://host/repo.git
+    CleanURL --> Authed : 執行 git 指令時由 helper 自動注入憑證
+    Authed --> Expired : Token 逾期或輪替
+    Authed --> Revoked : 主動註銷 Token
+```
+
+### 3.3. Social Login Client Secret
+
+```mermaid
+stateDiagram-v2
+    [*] --> Generated : 於 Google/Line 等開發者後台產生
+    Generated --> LocalConfigured : 寫入 appsettings.Development.json（不進 git）
+    LocalConfigured --> InMemory : 服務啟動時載入記憶體
+    InMemory --> OIDCHandshake : 與 OAuth Provider 進行後台 Token 交換驗證
+    InMemory --> Rotated : 金鑰外洩或定期重啟時更新
 ```
