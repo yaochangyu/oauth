@@ -41,7 +41,7 @@ task client-spa-host-dev  # SPA Host (HTML) https://localhost:5200
 | 要更新的位置 | 設定 |
 |---|---|
 | `src/AuthServer/OAuth.AuthServer.WebAPI/Properties/launchSettings.json` | `profiles.https.applicationUrl` |
-| `src/Admin/OAuth.Admin.WebUI/appsettings.json` | `OpenIdConnect.Authority` |
+| `src/Admin/OAuth.AuthServer.Admin.WebUI/appsettings.json` | `OpenIdConnect.Authority` |
 | `src/Clients/OAuth.Client.Mvc/appsettings.json` | `OpenIdConnect.Authority` |
 | `src/Clients/OAuth.Client.WebAPI/appsettings.json` | `Jwt.Authority` |
 

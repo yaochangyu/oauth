@@ -1,7 +1,7 @@
 <Solution>
   <Folder Name="/src/" />
   <Folder Name="/src/Admin/">
-    <Project Path="src/Admin/OAuth.Admin.WebUI/OAuth.Admin.WebUI.csproj" />
+    <Project Path="src/Admin/OAuth.AuthServer.Admin.WebUI/OAuth.AuthServer.Admin.WebUI.csproj" />
   </Folder>
   <Folder Name="/src/AuthServer/">
     <Project Path="src/AuthServer/OAuth.AuthServer.DB/OAuth.AuthServer.DB.csproj" />
