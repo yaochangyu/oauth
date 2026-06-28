@@ -30,24 +30,24 @@ tasks:
       - task: test-e2e
 
   api-dev:
-    desc: "開發模式啟動 Authorization Server"
+    desc: "開發模式啟動 Authorization Server（https://localhost:7001）"
     cmds:
-      - dotnet run --project {{.AUTHSERVER_PROJECT}} --environment Development
+      - dotnet run --project {{.AUTHSERVER_PROJECT}} --launch-profile https
 
   client-mvc-dev:
-    desc: "開發模式啟動 MVC Client"
+    desc: "開發模式啟動 MVC Client（https://localhost:5101）"
     cmds:
-      - dotnet run --project src/Clients/OAuth.Client.Mvc/OAuth.Client.Mvc.csproj --environment Development
+      - dotnet run --project src/Clients/OAuth.Client.Mvc/OAuth.Client.Mvc.csproj --launch-profile https
 
   client-api-dev:
-    desc: "開發模式啟動 WebAPI Client"
+    desc: "開發模式啟動 WebAPI Client（https://localhost:5102）"
     cmds:
-      - dotnet run --project src/Clients/OAuth.Client.WebAPI/OAuth.Client.WebAPI.csproj --environment Development
+      - dotnet run --project src/Clients/OAuth.Client.WebAPI/OAuth.Client.WebAPI.csproj --launch-profile https
 
   admin-dev:
     desc: "開發模式啟動 Admin UI（https://localhost:7002）"
     cmds:
-      - dotnet run --project {{.ADMIN_PROJECT}} --environment Development
+      - dotnet run --project {{.ADMIN_PROJECT}} --launch-profile https
 
   ef-migration-add:
     desc: "新增 EF Core Migration（用法：task ef-migration-add NAME=MigrationName）"

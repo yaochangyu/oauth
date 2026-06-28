@@ -16,17 +16,18 @@
 
 ```bash
 # 1. 基礎設施（必須先啟動）
-docker compose up -d
+task docker-up
 
 # 2. 套用 DB Migration（第一次或有新 migration 時）
-cd src/AuthServer/OAuth.AuthServer.WebAPI
-dotnet ef database update --project ../OAuth.AuthServer.DB
+task ef-database-update
 
-# 3. 啟動各服務（各自開 terminal，使用 https profile）
-dotnet run --project src/AuthServer/OAuth.AuthServer.WebAPI --launch-profile https
-dotnet run --project src/Admin/OAuth.Admin.WebUI --launch-profile https
-dotnet run --project src/Clients/OAuth.Client.Mvc --launch-profile https
-dotnet run --project src/Clients/OAuth.Client.WebAPI --launch-profile https
+# 3. 啟動各服務（各自開 terminal）
+task api-dev              # AuthServer      https://localhost:7001
+task admin-dev            # Admin UI        https://localhost:7002
+task client-mvc-dev       # MVC Client      https://localhost:5101
+task client-api-dev       # WebAPI Client   https://localhost:5102
+task client-spa-dev       # SPA (Vue)       http://localhost:5173
+task client-spa-host-dev  # SPA Host (HTML) https://localhost:5200
 ```
 
 ## OIDC Client 管理
