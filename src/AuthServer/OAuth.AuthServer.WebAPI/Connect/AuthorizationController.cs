@@ -59,4 +59,18 @@ public class AuthorizationController(
 
         return SignIn(principal, OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
     }
+
+    [HttpGet("~/connect/endsession")]
+    [HttpPost("~/connect/endsession")]
+    public async Task<IActionResult> EndSession()
+    {
+        await HttpContext.SignOutAsync(IdentityConstants.ApplicationScheme);
+
+        return SignOut(
+            authenticationSchemes: OpenIddictServerAspNetCoreDefaults.AuthenticationScheme,
+            properties: new AuthenticationProperties
+            {
+                RedirectUri = "/"
+            });
+    }
 }
