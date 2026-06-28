@@ -14,6 +14,7 @@
   </Folder>
   <Folder Name="/test/">
     <Project Path="test/OAuth.AuthServer.IntegrationTest/OAuth.AuthServer.IntegrationTest.csproj" />
+    <Project Path="test/OAuth.Clients.PlaywrightTest/OAuth.Clients.PlaywrightTest.csproj" />
     <Project Path="test/OAuth.E2E.WebwrightTest/OAuth.E2E.WebwrightTest.csproj" />
   </Folder>
 </Solution>
