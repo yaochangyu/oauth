@@ -21,6 +21,7 @@ services:
     container_name: oauth_seq
     environment:
       ACCEPT_EULA: Y
+      SEQ_FIRSTRUN_ADMINPASSWORD: Admin@123456
     ports:
       - "5341:5341"
       - "8081:80"
