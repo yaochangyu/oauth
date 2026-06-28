@@ -43,6 +43,14 @@ public class TokenController(
                     .SetClaim(Claims.Email, user.Email)
                     .SetClaim(Claims.Name, user.DisplayName ?? user.Email);
 
+            // roles scope：不論 authorize 路徑如何，一律在 token exchange 時重新載入
+            if (result.Principal!.HasScope(Scopes.Roles))
+            {
+                var roles = await userManager.GetRolesAsync(user);
+                foreach (var role in roles)
+                    identity.AddClaim(new Claim(Claims.Role, role));
+            }
+
             identity.SetDestinations(GetDestinations);
 
             return SignIn(new ClaimsPrincipal(identity), OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);

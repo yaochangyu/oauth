@@ -5,6 +5,9 @@ export default defineConfig({
   plugins: [vue()],
   server: {
     port: 5173,
-    historyApiFallback: true,
+  },
+  build: {
+    outDir: '../wwwroot',
+    emptyOutDir: true,
   },
 })
