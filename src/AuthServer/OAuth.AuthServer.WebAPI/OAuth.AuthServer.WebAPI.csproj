@@ -26,4 +26,10 @@
     <ProjectReference Include="..\OAuth.AuthServer.DB\OAuth.AuthServer.DB.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <_ContentIncludedByDefault Remove="binDebug\net10.0\BuildHost-net472\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.exe.config" />
+    <_ContentIncludedByDefault Remove="binDebug\net10.0\BuildHost-netcore\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.deps.json" />
+    <_ContentIncludedByDefault Remove="binDebug\net10.0\BuildHost-netcore\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.runtimeconfig.json" />
+  </ItemGroup>
+
 </Project>

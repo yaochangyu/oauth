@@ -32,36 +32,71 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/Account/Login";
+});
+
 var config = builder.Configuration;
 
-builder.Services.AddAuthentication()
-    .AddGoogle(options =>
+var authBuilder = builder.Services.AddAuthentication();
+
+var googleClientId = config["Authentication:Google:ClientId"];
+var googleClientSecret = config["Authentication:Google:ClientSecret"];
+if (!string.IsNullOrWhiteSpace(googleClientId) && !string.IsNullOrWhiteSpace(googleClientSecret))
+{
+    authBuilder.AddGoogle(options =>
     {
-        options.ClientId = config["Authentication:Google:ClientId"] ?? string.Empty;
-        options.ClientSecret = config["Authentication:Google:ClientSecret"] ?? string.Empty;
-    })
-    .AddMicrosoftAccount(options =>
+        options.ClientId = googleClientId;
+        options.ClientSecret = googleClientSecret;
+    });
+}
+
+var microsoftClientId = config["Authentication:Microsoft:ClientId"];
+var microsoftClientSecret = config["Authentication:Microsoft:ClientSecret"];
+if (!string.IsNullOrWhiteSpace(microsoftClientId) && !string.IsNullOrWhiteSpace(microsoftClientSecret))
+{
+    authBuilder.AddMicrosoftAccount(options =>
     {
-        options.ClientId = config["Authentication:Microsoft:ClientId"] ?? string.Empty;
-        options.ClientSecret = config["Authentication:Microsoft:ClientSecret"] ?? string.Empty;
-    })
-    .AddFacebook(options =>
+        options.ClientId = microsoftClientId;
+        options.ClientSecret = microsoftClientSecret;
+    });
+}
+
+var facebookAppId = config["Authentication:Facebook:AppId"];
+var facebookAppSecret = config["Authentication:Facebook:AppSecret"];
+if (!string.IsNullOrWhiteSpace(facebookAppId) && !string.IsNullOrWhiteSpace(facebookAppSecret))
+{
+    authBuilder.AddFacebook(options =>
     {
-        options.AppId = config["Authentication:Facebook:AppId"] ?? string.Empty;
-        options.AppSecret = config["Authentication:Facebook:AppSecret"] ?? string.Empty;
+        options.AppId = facebookAppId;
+        options.AppSecret = facebookAppSecret;
         options.Scope.Add("email");
         options.Scope.Add("public_profile");
-    })
-    .AddLine(options =>
-    {
-        options.ClientId = config["Authentication:Line:ClientId"] ?? string.Empty;
-        options.ClientSecret = config["Authentication:Line:ClientSecret"] ?? string.Empty;
-    })
-    .AddThreads(options =>
-    {
-        options.ClientId = config["Authentication:Threads:ClientId"] ?? string.Empty;
-        options.ClientSecret = config["Authentication:Threads:ClientSecret"] ?? string.Empty;
     });
+}
+
+var lineClientId = config["Authentication:Line:ClientId"];
+var lineClientSecret = config["Authentication:Line:ClientSecret"];
+if (!string.IsNullOrWhiteSpace(lineClientId) && !string.IsNullOrWhiteSpace(lineClientSecret))
+{
+    authBuilder.AddLine(options =>
+    {
+        options.ClientId = lineClientId;
+        options.ClientSecret = lineClientSecret;
+    });
+}
+
+var threadsClientId = config["Authentication:Threads:ClientId"];
+var threadsClientSecret = config["Authentication:Threads:ClientSecret"];
+if (!string.IsNullOrWhiteSpace(threadsClientId) && !string.IsNullOrWhiteSpace(threadsClientSecret))
+{
+    authBuilder.AddThreads(options =>
+    {
+        options.ClientId = threadsClientId;
+        options.ClientSecret = threadsClientSecret;
+    });
+}
 
 builder.Services.AddOpenIddict()
     .AddCore(options =>
@@ -75,6 +110,14 @@ builder.Services.AddOpenIddict()
                .SetTokenEndpointUris("/connect/token")
                .SetUserInfoEndpointUris("/connect/userinfo")
                .SetEndSessionEndpointUris("/connect/endsession");
+
+        options.RegisterScopes(
+            OpenIddict.Abstractions.OpenIddictConstants.Scopes.OpenId,
+            OpenIddict.Abstractions.OpenIddictConstants.Scopes.Email,
+            OpenIddict.Abstractions.OpenIddictConstants.Scopes.Profile,
+            OpenIddict.Abstractions.OpenIddictConstants.Scopes.Roles,
+            "offline_access",
+            "api");
 
         // Authorization Code + PKCE
         options.AllowAuthorizationCodeFlow()

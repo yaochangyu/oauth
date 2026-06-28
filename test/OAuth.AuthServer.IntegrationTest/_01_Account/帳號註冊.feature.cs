@@ -167,8 +167,8 @@ namespace OAuth.AuthServer.IntegrationTest._01_Account
     await this.FeatureBackgroundAsync();
 #line hidden
 #line 7
-        await testRunner.GivenAsync("調用端已準備 Body 參數(Json)", "{\n  \"email\": \"test@example.com\",\n  \"password\": \"Test1234\",\n  \"displayName\": \"測試使用" +
-                        "者\"\n}", ((global::Reqnroll.Table)(null)), "Given ");
+        await testRunner.GivenAsync("調用端已準備 Body 參數(Json)", "{\r\n  \"email\": \"test@example.com\",\r\n  \"password\": \"Test1234\",\r\n  \"displayName\": \"測" +
+                        "試使用者\"\r\n}", ((global::Reqnroll.Table)(null)), "Given ");
 #line hidden
 #line 15
         await testRunner.WhenAsync("調用端發送 \"POST\" 請求至 \"api/v1/account/register\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
@@ -208,7 +208,7 @@ namespace OAuth.AuthServer.IntegrationTest._01_Account
     await this.FeatureBackgroundAsync();
 #line hidden
 #line 20
-        await testRunner.GivenAsync("調用端已準備 Body 參數(Json)", "{\n  \"email\": \"duplicate@example.com\",\n  \"password\": \"Test1234\"\n}", ((global::Reqnroll.Table)(null)), "Given ");
+        await testRunner.GivenAsync("調用端已準備 Body 參數(Json)", "{\r\n  \"email\": \"duplicate@example.com\",\r\n  \"password\": \"Test1234\"\r\n}", ((global::Reqnroll.Table)(null)), "Given ");
 #line hidden
 #line 27
         await testRunner.WhenAsync("調用端發送 \"POST\" 請求至 \"api/v1/account/register\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
@@ -217,7 +217,7 @@ namespace OAuth.AuthServer.IntegrationTest._01_Account
         await testRunner.ThenAsync("預期得到 HttpStatusCode 為 \"201\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
 #line 29
-        await testRunner.GivenAsync("調用端已準備 Body 參數(Json)", "{\n  \"email\": \"duplicate@example.com\",\n  \"password\": \"Test1234\"\n}", ((global::Reqnroll.Table)(null)), "Given ");
+        await testRunner.GivenAsync("調用端已準備 Body 參數(Json)", "{\r\n  \"email\": \"duplicate@example.com\",\r\n  \"password\": \"Test1234\"\r\n}", ((global::Reqnroll.Table)(null)), "Given ");
 #line hidden
 #line 36
         await testRunner.WhenAsync("調用端發送 \"POST\" 請求至 \"api/v1/account/register\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
@@ -254,7 +254,7 @@ namespace OAuth.AuthServer.IntegrationTest._01_Account
     await this.FeatureBackgroundAsync();
 #line hidden
 #line 40
-        await testRunner.GivenAsync("調用端已準備 Body 參數(Json)", "{\n  \"email\": \"weak@example.com\",\n  \"password\": \"123\"\n}", ((global::Reqnroll.Table)(null)), "Given ");
+        await testRunner.GivenAsync("調用端已準備 Body 參數(Json)", "{\r\n  \"email\": \"weak@example.com\",\r\n  \"password\": \"123\"\r\n}", ((global::Reqnroll.Table)(null)), "Given ");
 #line hidden
 #line 47
         await testRunner.WhenAsync("調用端發送 \"POST\" 請求至 \"api/v1/account/register\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
