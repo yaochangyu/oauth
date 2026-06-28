@@ -69,6 +69,17 @@ public class AuthorizeModel(
             nameClaim.SetDestinations(Destinations.AccessToken);
         identity.AddClaim(nameClaim);
 
+        if (request.HasScope(Scopes.Roles))
+        {
+            var roles = await userManager.GetRolesAsync(user);
+            foreach (var role in roles)
+            {
+                var roleClaim = new Claim(Claims.Role, role);
+                roleClaim.SetDestinations(Destinations.AccessToken, Destinations.IdentityToken);
+                identity.AddClaim(roleClaim);
+            }
+        }
+
         var principal = new ClaimsPrincipal(identity);
         principal.SetScopes(request.GetScopes());
 

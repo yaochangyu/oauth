@@ -69,6 +69,7 @@ public class TokenController(
         {
             Claims.Name or Claims.Email => [Destinations.AccessToken, Destinations.IdentityToken],
             Claims.Subject => [Destinations.AccessToken, Destinations.IdentityToken],
+            Claims.Role => [Destinations.AccessToken, Destinations.IdentityToken],
             _ => [Destinations.AccessToken],
         };
     }

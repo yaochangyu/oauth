@@ -45,8 +45,17 @@ builder.Services.AddAuthentication(options =>
     options.Scope.Add("openid");
     options.Scope.Add("profile");
     options.Scope.Add("email");
+    options.Scope.Add("roles");
     options.SaveTokens = true;
     options.GetClaimsFromUserInfoEndpoint = true;
+
+    // 保留 JWT claim 原始名稱（不轉成 WS-Federation 長名稱）
+    options.MapInboundClaims = false;
+    options.TokenValidationParameters.NameClaimType = "name";
+    options.TokenValidationParameters.RoleClaimType = "role";
+
+    // 將 UserInfo 回應的 role claim 對應到 ClaimsPrincipal（單值情境）
+    options.ClaimActions.MapJsonKey("role", "role");
 });
 
 // ── Authorization：admin policy ───────────────────────────────────────────────

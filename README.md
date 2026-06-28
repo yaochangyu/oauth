@@ -168,6 +168,8 @@ src/Clients/OAuth.Client.Mvc/appsettings.Development.json
 │   ├── AuthServer/
 │   │   ├── OAuth.AuthServer.WebAPI/    # Authorization Server 主程式（port 7001）
 │   │   └── OAuth.AuthServer.DB/        # EF Core + Migrations
+│   ├── Admin/
+│   │   └── OAuth.Admin.WebUI/          # 管理後台（Blazor Server + MudBlazor，參考 pixel-identity）
 │   └── Clients/
 │       ├── OAuth.Client.Mvc/           # MVC 示範（Cookie SSO，port 5101）
 │       └── OAuth.Client.WebAPI/        # API 示範（Bearer Token，port 5102）
@@ -179,6 +181,10 @@ src/Clients/OAuth.Client.Mvc/appsettings.Development.json
 ├── docker-compose.yml                  # PostgreSQL 16 + Seq
 └── Taskfile.yml                        # 開發指令集中管理
 ```
+
+### 管理後台（Admin UI）
+
+`src/Admin/OAuth.Admin.WebUI/` 參考 **[pixel-identity](https://github.com/Codex-/pixel-identity)** 實作，以 **Blazor Server + MudBlazor 7.x** 為技術棧，提供 OpenIddict 應用程式與 scope 的管理介面。
 
 ---
 

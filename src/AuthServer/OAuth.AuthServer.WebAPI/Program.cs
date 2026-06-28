@@ -155,6 +155,7 @@ builder.Services.AddOpenIddict()
 builder.Services.AddScoped<AccountHandler>();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 builder.Services.AddHostedService<OpenIddictDataSeeder>();
+builder.Services.AddHostedService<AdminUserSeeder>();
 
 builder.Services.AddCors(options =>
 {

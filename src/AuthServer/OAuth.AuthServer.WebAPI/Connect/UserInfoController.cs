@@ -36,6 +36,13 @@ public class UserInfoController(UserManager<ApplicationUser> userManager) : Cont
         if (user.AvatarUrl is not null)
             claims[Claims.Picture] = user.AvatarUrl;
 
+        if (User.GetScopes().Contains(Scopes.Roles))
+        {
+            var roles = await userManager.GetRolesAsync(user);
+            if (roles.Count > 0)
+                claims[Claims.Role] = roles.Count == 1 ? (object)roles[0] : roles.ToArray();
+        }
+
         return Ok(claims);
     }
 }
