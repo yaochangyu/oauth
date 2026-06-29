@@ -16,7 +16,7 @@ public class UserAdminService(UserManager<ApplicationUser> userManager)
                 (u.Email != null && u.Email.Contains(filter)));
 
         var total = query.Count();
-        var items = query.Skip((page - 1) * pageSize).Take(pageSize)
+        var items = query.OrderBy(u => u.UserName).Skip((page - 1) * pageSize).Take(pageSize)
             .Select(u => new UserDetailsViewModel
             {
                 Id = u.Id,
