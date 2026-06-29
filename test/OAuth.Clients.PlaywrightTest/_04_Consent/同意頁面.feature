@@ -1,7 +1,9 @@
 Feature: 同意頁面
 
     Background:
-        Given 開啟全新的瀏覽器視窗
+        Given 初始化 Auth 伺服器
+        And 初始化 MVC Client 測試環境
+        And 開啟全新的瀏覽器視窗
 
     Scenario: Explicit Client 授權前顯示同意頁面
         Given 使用者尚未登入

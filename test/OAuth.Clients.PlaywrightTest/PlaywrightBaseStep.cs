@@ -85,7 +85,45 @@ public class PlaywrightBaseStep(ScenarioContext ctx)
     // ── Scenario 瀏覽器生命週期 ─────────────────────────────────────────────
 
     [BeforeScenario]
-    public async Task BeforeScenario()
+    public Task BeforeScenario() => Task.CompletedTask;
+
+    [AfterScenario]
+    public async Task AfterScenario()
+    {
+        if (ctx.TryGetValue("browser", out var b) && b is IBrowser browser)
+            await browser.DisposeAsync();
+        if (ctx.TryGetValue("playwright", out var p) && p is IPlaywright playwright)
+            playwright.Dispose();
+    }
+
+    // ── 共用 Steps ──────────────────────────────────────────────────────────
+
+    [Given(@"初始化 Auth 伺服器")]
+    public async Task Given初始化Auth伺服器()
+    {
+        await EnsureServiceReadyAsync(TestSettings.AuthServerBase);
+    }
+
+    [Given(@"初始化 MVC Client 測試環境")]
+    public async Task Given初始化MvcClient測試環境()
+    {
+        await EnsureServiceReadyAsync(TestSettings.MvcClientBase);
+    }
+
+    [Given(@"初始化 SPA Host 測試環境")]
+    public async Task Given初始化SpaHost測試環境()
+    {
+        await EnsureServiceReadyAsync(TestSettings.SpaHostBase);
+    }
+
+    [Given(@"初始化 Admin UI 測試環境")]
+    public async Task Given初始化AdminUI測試環境()
+    {
+        await EnsureServiceReadyAsync(TestSettings.AdminUIBase);
+    }
+
+    [Given(@"開啟全新的瀏覽器視窗")]
+    public async Task Given開啟全新的瀏覽器視窗()
     {
         var playwright = await Playwright.CreateAsync();
         var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
@@ -101,23 +139,6 @@ public class PlaywrightBaseStep(ScenarioContext ctx)
         ctx["playwright"] = playwright;
         ctx["browser"]    = browser;
         ctx["page"]       = page;
-    }
-
-    [AfterScenario]
-    public async Task AfterScenario()
-    {
-        if (ctx.TryGetValue("browser", out var b) && b is IBrowser browser)
-            await browser.DisposeAsync();
-        if (ctx.TryGetValue("playwright", out var p) && p is IPlaywright playwright)
-            playwright.Dispose();
-    }
-
-    // ── 共用 Steps ──────────────────────────────────────────────────────────
-
-    [Given(@"開啟全新的瀏覽器視窗")]
-    public void Given開啟全新的瀏覽器視窗()
-    {
-        // BeforeScenario 已建立乾淨 context，此 step 為語意佔位
     }
 
     /// <summary>填寫 AuthServer 登入表單並送出，等待 DOMContentLoaded。</summary>
@@ -202,6 +223,9 @@ public class PlaywrightBaseStep(ScenarioContext ctx)
         return Process.Start(psi)
             ?? throw new InvalidOperationException($"服務啟動失敗: {relPath}");
     }
+
+    private static Task EnsureServiceReadyAsync(string baseUrl) =>
+        WaitForReadyAsync(baseUrl, timeoutSeconds: 10);
 
     private static async Task WaitForReadyAsync(string baseUrl, int timeoutSeconds)
     {

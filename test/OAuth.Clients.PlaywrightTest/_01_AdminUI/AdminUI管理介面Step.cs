@@ -79,7 +79,9 @@ public class AdminUI管理介面Step(ScenarioContext ctx)
     [Then(@"頁面應跳轉至使用者編輯頁")]
     public async Task Then頁面應跳轉至使用者編輯頁()
     {
-        await Page.WaitForURLAsync("**/users/edit/**", new() { Timeout = 10_000 });
+        // Blazor Server 以 SignalR 更新 URL（無 full page load），改用 ToHaveURLAsync 輪詢
+        await Assertions.Expect(Page).ToHaveURLAsync(new System.Text.RegularExpressions.Regex("/users/edit/"),
+            new PageAssertionsToHaveURLOptions { Timeout = 10_000 });
         Assert.Contains("/users/edit/", Page.Url);
     }
 

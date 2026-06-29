@@ -1,7 +1,9 @@
 Feature: SPA Host 驗證流程
 
     Background:
-        Given 開啟全新的瀏覽器視窗
+        Given 初始化 Auth 伺服器
+        And 初始化 SPA Host 測試環境
+        And 開啟全新的瀏覽器視窗
 
     Scenario: 登入成功後停在 SPA Host 不發生 OIDC 迴圈
         When 使用者前往 SPA Host 首頁
