@@ -1,7 +1,10 @@
 Feature: Admin UI 管理介面
 
     Background:
-        Given 已登入 Admin UI 管理介面
+        Given 初始化 Auth 伺服器
+        And 初始化 Admin UI 測試環境
+        And 開啟全新的瀏覽器視窗
+        And 已登入 Admin UI 管理介面
 
     Scenario: 首頁顯示 Dashboard
         When 開啟 Admin UI 首頁

@@ -33,13 +33,28 @@ public class SpaHost驗證流程Step(ScenarioContext ctx)
     [Then(@"首頁應顯示已登入文字")]
     public async Task Then首頁應顯示已登入文字()
     {
-        await Page.WaitForSelectorAsync("text=已登入", new() { Timeout = 30_000 });
+        // callback 頁 handleCallback() 為 async，等 SPA 路由完成後再回首頁確認狀態
+        await Page.WaitForURLAsync($"{TestSettings.SpaHostBase}/profile", new PageWaitForURLOptions
+        {
+            WaitUntil = WaitUntilState.DOMContentLoaded,
+            Timeout   = 20_000,
+        });
+        await Page.GotoAsync(TestSettings.SpaHostBase);
+        await Page.WaitForSelectorAsync("text=已登入", new() { Timeout = 10_000 });
         await Assertions.Expect(Page.GetByText("已登入")).ToBeVisibleAsync();
     }
 
     [When(@"使用者前往 SPA 個人資料頁")]
     public async Task When使用者前往SPA個人資料頁()
     {
+        // 若仍在 callback 頁，等 SPA 路由到 /profile 後 tokens 才存入 storage
+        if (Page.Url.Contains("/callback"))
+            await Page.WaitForURLAsync($"{TestSettings.SpaHostBase}/profile", new PageWaitForURLOptions
+            {
+                WaitUntil = WaitUntilState.DOMContentLoaded,
+                Timeout   = 15_000,
+            });
+
         await Page.GotoAsync($"{TestSettings.SpaHostBase}/profile");
         await Page.WaitForSelectorAsync("h1:has-text('個人資料')", new() { Timeout = 10_000 });
     }

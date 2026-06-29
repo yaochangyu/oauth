@@ -19,6 +19,7 @@ public class OpenIddictDataSeeder(IServiceProvider serviceProvider) : IHostedSer
             {
                 ClientId    = "spa-client",
                 ClientType  = ClientTypes.Public,
+                ConsentType = ConsentTypes.Implicit,
                 DisplayName = "SPA Client",
                 RedirectUris =
                 {
@@ -167,6 +168,7 @@ public class OpenIddictDataSeeder(IServiceProvider serviceProvider) : IHostedSer
                 ClientId     = "admin-client",
                 ClientSecret = "admin-client-secret",
                 ClientType   = ClientTypes.Confidential,
+                ConsentType  = ConsentTypes.Implicit,
                 DisplayName  = "Admin Panel",
                 RedirectUris           = { new Uri("https://localhost:7002/signin-oidc") },
                 PostLogoutRedirectUris = { new Uri("https://localhost:7002/signout-callback-oidc") },
