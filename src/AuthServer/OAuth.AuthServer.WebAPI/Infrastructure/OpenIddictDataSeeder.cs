@@ -161,6 +161,42 @@ public class OpenIddictDataSeeder(IServiceProvider serviceProvider) : IHostedSer
             }, cancellationToken);
         }
 
+        if (await manager.FindByClientIdAsync("webapi-test-client", cancellationToken) is null)
+        {
+            await manager.CreateAsync(new OpenIddictApplicationDescriptor
+            {
+                ClientId    = "webapi-test-client",
+                ClientType  = ClientTypes.Public,
+                ConsentType = ConsentTypes.Implicit,
+                DisplayName = "WebAPI Integration Test Client",
+                RedirectUris =
+                {
+                    new Uri("https://localhost:5102/callback"),
+                    new Uri("http://localhost:5102/callback"),
+                },
+                PostLogoutRedirectUris =
+                {
+                    new Uri("https://localhost:5102"),
+                    new Uri("http://localhost:5102"),
+                },
+                Permissions =
+                {
+                    Permissions.Endpoints.Authorization,
+                    Permissions.Endpoints.Token,
+                    Permissions.Endpoints.EndSession,
+                    Permissions.GrantTypes.AuthorizationCode,
+                    Permissions.GrantTypes.RefreshToken,
+                    Permissions.ResponseTypes.Code,
+                    Permissions.Scopes.Email,
+                    Permissions.Scopes.Profile,
+                    Permissions.Scopes.Roles,
+                    Permissions.Prefixes.Scope + "offline_access",
+                    Permissions.Prefixes.Scope + "api",
+                },
+                Requirements = { Requirements.Features.ProofKeyForCodeExchange },
+            }, cancellationToken);
+        }
+
         if (await manager.FindByClientIdAsync("admin-client", cancellationToken) is null)
         {
             await manager.CreateAsync(new OpenIddictApplicationDescriptor

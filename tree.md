@@ -92,6 +92,23 @@
 │   │   ├── BaseStep.cs                              # 共用 BDD Steps（中文）
 │   │   ├── TestAssistant.cs                         # Testcontainers 工具
 │   │   └── TestServer.cs                            # WebApplicationFactory
+│   ├── OAuth.Client.WebAPI.IntegrationTest/          # Web API 客戶端整合測試（Reqnroll + xUnit + Mock Authentication）
+│   │   ├── _01_Authentication/
+│   │   │   ├── Bearer驗證.feature                    # BDD：有效 Bearer、無 Token、無效 Token
+│   │   │   ├── PKCE流程.feature                      # BDD：Authorization Code + PKCE → Token → API 調用（Mock auth context）
+│   │   │   └── *.feature.cs                         # 自動生成的 feature 支援類
+│   │   ├── _02_MeEndpoint/
+│   │   │   ├── Me端點.feature                        # BDD：GET /api/v1/me 正常 + 無 Token + 無效 Token
+│   │   │   └── Me端點.feature.cs                     # 自動生成的 feature 支援類
+│   │   ├── _03_ProtectedResource/
+│   │   │   ├── 受保護資源.feature                    # BDD：GET /api/v1/protected 正常 + 無 Token + 無效 Token
+│   │   │   └── 受保護資源.feature.cs                 # 自動生成的 feature 支援類
+│   │   ├── TestAuthHandler.cs                       # 測試用 Mock Authentication Handler（讀取 X-Test-User 標頭注入 ClaimsPrincipal）
+│   │   ├── BaseStep.cs                              # [Binding] 單一 Step 定義類：集中所有 Given/When/Then 步驟 + PKCE 工具方法 ✅ 已合併 SharedSteps.cs
+│   │   ├── TestFixture.cs                           # WebApplicationFactory 包裝：啟動 WebAPI 伺服器、管理 HttpClient
+│   │   ├── WebApiTestFactory.cs                     # Test 環境配置：UseEnvironment("Test") 啟用 Mock Authentication
+│   │   ├── appsettings.json                         # 測試設定（無外部依賴）
+│   │   └── specflow.json                            # Reqnroll 語言設定
 │   ├── OAuth.Clients.PlaywrightTest/                 # Client E2E 測試（Reqnroll + Playwright + Testcontainers）
 │   │   ├── _01_AdminUI/
 │   │   │   ├── AdminUI管理介面.feature               # BDD：Admin UI 管理介面（Dashboard / Users / Roles / Applications / Scopes）
