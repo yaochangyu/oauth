@@ -37,6 +37,9 @@ Thumbs.db
 ## IDE
 .idea/
 
+## Node / npm（Vue 前端專案，如 OAuth.AuthServer.WebUI、OAuth.Client.SpaHost/ClientApp）
+node_modules/
+
 ## Graphify - 共享圖譜成果，排除本機快取與環境檔
 graphify-out/*
 !graphify-out/graph.html

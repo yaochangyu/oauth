@@ -68,7 +68,7 @@ public class 同意頁面Step(ScenarioContext ctx)
     public async Task Then應顯示同意頁面()
     {
         await Assertions.Expect(Page).ToHaveURLAsync(
-            new Regex("/Connect/Consent"),
+            new Regex("/consent", RegexOptions.IgnoreCase),
             new PageAssertionsToHaveURLOptions { Timeout = 10_000 });
     }
 
@@ -82,7 +82,7 @@ public class 同意頁面Step(ScenarioContext ctx)
     [Then(@"不應顯示同意頁面")]
     public void Then不應顯示同意頁面()
     {
-        Assert.DoesNotContain("/Connect/Consent", Page.Url);
+        Assert.False(Page.Url.Contains("/consent", StringComparison.OrdinalIgnoreCase));
     }
 
     [Then(@"應完成授權跳轉至 MVC Client")]
