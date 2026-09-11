@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Caching.Distributed;
 using OAuth.AuthServer.DB;
 using OpenIddict.Abstractions;
 using OpenIddict.Server.AspNetCore;
@@ -16,7 +16,7 @@ namespace OAuth.AuthServer.WebAPI.Connect;
 public class AuthorizationController(
     UserManager<ApplicationUser> userManager,
     IOpenIddictApplicationManager applicationManager,
-    IMemoryCache cache) : ControllerBase
+    IDistributedCache cache) : ControllerBase
 {
     [HttpGet("~/connect/authorize")]
     [HttpPost("~/connect/authorize")]
@@ -29,7 +29,7 @@ public class AuthorizationController(
         if (!result.Succeeded)
         {
             var returnUrl = Request.PathBase + Request.Path + Request.QueryString;
-            return Redirect($"/Account/Login?returnUrl={Uri.EscapeDataString(returnUrl)}");
+            return Redirect($"/login?returnUrl={Uri.EscapeDataString(returnUrl)}");
         }
 
         // Consent check: null 或未設定視同 explicit
@@ -42,14 +42,16 @@ public class AuthorizationController(
             var consentDecision = string.Empty;
             var consentClientId = string.Empty;
 
-            if (!string.IsNullOrEmpty(consentToken) &&
-                cache.TryGetValue($"consent:{consentToken}", out string? tokenValue) &&
-                tokenValue is not null)
+            if (!string.IsNullOrEmpty(consentToken))
             {
-                cache.Remove($"consent:{consentToken}");
-                var parts = tokenValue.Split(':', 2);
-                consentDecision = parts[0];
-                consentClientId = parts.Length > 1 ? parts[1] : string.Empty;
+                var tokenValue = await cache.GetStringAsync($"consent:{consentToken}");
+                if (tokenValue is not null)
+                {
+                    await cache.RemoveAsync($"consent:{consentToken}");
+                    var parts = tokenValue.Split(':', 2);
+                    consentDecision = parts[0];
+                    consentClientId = parts.Length > 1 ? parts[1] : string.Empty;
+                }
             }
 
             if (consentDecision == "denied" && consentClientId == request.ClientId)
@@ -71,7 +73,7 @@ public class AuthorizationController(
                         .Where(kvp => kvp.Key != "__ct")
                         .Select(kvp => new KeyValuePair<string, string?>(kvp.Key, kvp.Value.ToString())));
                 var returnUrl = Request.Path + cleanQs;
-                return Redirect($"/Connect/Consent?returnUrl={Uri.EscapeDataString(returnUrl)}");
+                return Redirect($"/consent?returnUrl={Uri.EscapeDataString(returnUrl)}");
             }
         }
 

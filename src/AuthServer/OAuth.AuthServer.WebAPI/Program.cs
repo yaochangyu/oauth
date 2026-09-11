@@ -1,15 +1,16 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using OAuth.AuthServer.DB;
 using OAuth.AuthServer.WebAPI.Account;
 using OAuth.AuthServer.WebAPI.Infrastructure;
 using OAuth.AuthServer.WebAPI.Infrastructure.Threads;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllersWithViews();
-builder.Services.AddRazorPages();
+builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 builder.Services.AddMemoryCache();
 builder.Services.AddDistributedMemoryCache();
@@ -42,7 +43,33 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 
 builder.Services.ConfigureApplicationCookie(options =>
 {
-    options.LoginPath = "/Account/Login";
+    // Headless：/login、/consent 由 Vue 3 前端（OAuth.AuthServer.WebUI）託管
+    options.LoginPath = "/login";
+    options.AccessDeniedPath = "/error";
+
+    // 純 API 呼叫（/api/**、/connect/**）不應被導向登入頁，改回 401/403 JSON 讓前端處理
+    options.Events.OnRedirectToLogin = context =>
+    {
+        if (context.Request.Path.StartsWithSegments("/api") ||
+            context.Request.Path.StartsWithSegments("/connect"))
+        {
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            return Task.CompletedTask;
+        }
+        context.Response.Redirect(context.RedirectUri);
+        return Task.CompletedTask;
+    };
+    options.Events.OnRedirectToAccessDenied = context =>
+    {
+        if (context.Request.Path.StartsWithSegments("/api") ||
+            context.Request.Path.StartsWithSegments("/connect"))
+        {
+            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            return Task.CompletedTask;
+        }
+        context.Response.Redirect(context.RedirectUri);
+        return Task.CompletedTask;
+    };
 });
 
 var config = builder.Configuration;
@@ -171,9 +198,41 @@ builder.Services.AddCors(options =>
         policy.WithOrigins(
                   "http://localhost:5173", "https://localhost:5173",
                   "https://localhost:3000",
-                  "http://localhost:5200", "https://localhost:5200")
+                  "http://localhost:5200", "https://localhost:5200",
+                  "http://localhost:5300", "https://localhost:5300") // OAuth.AuthServer.WebUI（Vite dev server）
               .AllowAnyHeader()
-              .AllowAnyMethod());
+              .AllowAnyMethod()
+              .AllowCredentials());
+});
+
+// 每 IP 每分鐘最多 5 次登入嘗試，防止暴力破解字典攻擊。
+// 門檻可透過 RateLimiting:Login:PermitLimit / WindowSeconds 設定覆蓋（僅供 E2E 測試環境放寬使用，
+// 正式環境／appsettings.json 未設定時維持規格要求的每分鐘 5 次）。
+const string LoginRateLimiterPolicy = "login";
+var loginRateLimitPermitLimit = config.GetValue("RateLimiting:Login:PermitLimit", 5);
+var loginRateLimitWindowSeconds = config.GetValue("RateLimiting:Login:WindowSeconds", 60);
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    options.AddPolicy(LoginRateLimiterPolicy, httpContext =>
+    {
+        // 優先採用 X-Forwarded-For（反向代理環境常見），退回連線的 RemoteIpAddress
+        var partitionKey = httpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault()
+            ?? httpContext.Connection.RemoteIpAddress?.ToString()
+            ?? "unknown";
+
+        return RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: partitionKey,
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = loginRateLimitPermitLimit,
+                Window = TimeSpan.FromSeconds(loginRateLimitWindowSeconds),
+                QueueLimit = 0,
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+            });
+    });
 });
 
 var app = builder.Build();
@@ -185,11 +244,17 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseCors("spa");
+
+// SPA 靜態託管：預設檔案 → 靜態檔案 → （路由與 API 之後）Fallback 到 index.html
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
 app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseRateLimiter();
 app.MapControllers();
-app.MapRazorPages();
+app.MapFallbackToFile("index.html");
 
 app.Run();
 

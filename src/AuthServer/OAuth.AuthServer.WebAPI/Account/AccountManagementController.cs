@@ -5,20 +5,27 @@ using Microsoft.AspNetCore.Mvc;
 using OAuth.AuthServer.DB;
 using OpenIddict.Abstractions;
 using OpenIddict.Server.AspNetCore;
+using OpenIddict.Validation.AspNetCore;
 using static OpenIddict.Abstractions.OpenIddictConstants;
 
 namespace OAuth.AuthServer.WebAPI.Account;
 
 [ApiController]
 [Route("api/v1/account")]
-[Authorize(AuthenticationSchemes = OpenIddictServerAspNetCoreDefaults.AuthenticationScheme)]
+[Authorize(AuthenticationSchemes = OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme)]
 public class AccountManagementController(
     UserManager<ApplicationUser> userManager) : ControllerBase
 {
+    /// <summary>
+    /// 目前使用者資訊：同時支援 Identity Cookie（Vue 3 /login 建立的瀏覽器工作階段，
+    /// 由 Headless 登入流程呼叫）與 OpenIddict Bearer Token（一般資源伺服器呼叫方）。
+    /// 兩者共用同一路由，避免與此 controller 既有 API 產生 Ambiguous Route。
+    /// </summary>
     [HttpGet("me")]
+    [Authorize(AuthenticationSchemes = "Identity.Application," + OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme)]
     public async Task<IActionResult> Me()
     {
-        var userId = User.GetClaim(Claims.Subject);
+        var userId = User.GetClaim(Claims.Subject) ?? userManager.GetUserId(User);
         if (userId is null) return Unauthorized();
 
         var user = await userManager.FindByIdAsync(userId);

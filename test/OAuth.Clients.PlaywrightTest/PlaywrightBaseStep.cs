@@ -45,8 +45,16 @@ public class PlaywrightBaseStep(ScenarioContext ctx)
 
         await RunMigrationsAsync(repoRoot, connStr);
 
+        // 整個測試執行過程中，多個情境會透過同一個 loopback IP 反覆呼叫登入端點，
+        // 為避免觸發正式環境用的「每 IP 每分鐘 5 次」限流（進而讓 E2E 測試產生偽陽性失敗），
+        // 僅在此 E2E 測試進程啟動的 AuthServer 放寬門檻；正式/一般開發環境不受影響。
         _services.Add(StartService(repoRoot, "src/AuthServer/OAuth.AuthServer.WebAPI",
-            "https://localhost:7001;http://localhost:5265", connStr));
+            "https://localhost:7001;http://localhost:5265", connStr,
+            extraEnv: new Dictionary<string, string>
+            {
+                ["RateLimiting__Login__PermitLimit"] = "1000",
+                ["RateLimiting__Login__WindowSeconds"] = "60",
+            }));
         _services.Add(StartService(repoRoot, "src/Admin/OAuth.AuthServer.Admin.WebUI",
             "https://localhost:7002;http://localhost:5279", connStr));
         _services.Add(StartService(repoRoot, "src/Clients/OAuth.Client.Mvc",
@@ -141,7 +149,12 @@ public class PlaywrightBaseStep(ScenarioContext ctx)
         ctx["page"]       = page;
     }
 
-    /// <summary>填寫 AuthServer 登入表單並送出，等待 DOMContentLoaded。</summary>
+    /// <summary>
+    /// 填寫 AuthServer（Vue 3 Headless 認證站）登入表單並送出。
+    /// 登入表單以 fetch 呼叫 API、成功後才用 window.location.href 做客戶端導頁（非傳統 form POST），
+    /// 屬非同步流程，click 完成當下瀏覽器可能尚未開始導頁，因此不能只做一次性的
+    /// WaitForLoadState 檢查（會在導頁真正發生前就提早返回）。改為主動等待 URL 離開 /login。
+    /// </summary>
     [When(@"使用者輸入帳號 ""(.*)"" 密碼 ""(.*)"" 登入")]
     public async Task When使用者輸入帳號密碼登入(string username, string password)
     {
@@ -149,7 +162,15 @@ public class PlaywrightBaseStep(ScenarioContext ctx)
         await page.WaitForSelectorAsync("input[name='userName']", new() { Timeout = 15_000 });
         await page.FillAsync("input[name='userName']", username);
         await page.FillAsync("input[type='password']", password);
+
+        var navigationTask = page.WaitForURLAsync(
+            url => !url.Contains("/login", StringComparison.OrdinalIgnoreCase),
+            new PageWaitForURLOptions { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 20_000 });
         await page.ClickAsync("button[type='submit']");
+
+        try { await navigationTask; }
+        catch (TimeoutException) { /* 登入失敗等情境會停留在 /login，交由呼叫端自行斷言 */ }
+
         await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded, new() { Timeout = 20_000 });
     }
 
@@ -158,7 +179,7 @@ public class PlaywrightBaseStep(ScenarioContext ctx)
     public async Task When若顯示同意頁面則同意授權()
     {
         var page = Page;
-        if (!page.Url.Contains("/Connect/Consent")) return;
+        if (!page.Url.Contains("/consent", StringComparison.OrdinalIgnoreCase)) return;
 
         var navigationTask = page.WaitForURLAsync($"{TestSettings.MvcClientBase}/**", new PageWaitForURLOptions
         {
@@ -179,21 +200,29 @@ public class PlaywrightBaseStep(ScenarioContext ctx)
 
     private static string FindRepoRoot()
     {
+        // .git 在一般 clone 是資料夾，但在 git worktree（例如本 Agent 的隔離工作目錄）是指向
+        // 主 repo `.git/worktrees/<name>` 的檔案。只檢查 Directory.Exists 會在 worktree 內跳過
+        // worktree 自己的根目錄，誤判到父層真正的主 checkout，導致背景服務跑的是「別的」程式碼。
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
         while (dir is not null)
         {
-            if (Directory.Exists(Path.Combine(dir.FullName, ".git"))) return dir.FullName;
+            var gitPath = Path.Combine(dir.FullName, ".git");
+            if (Directory.Exists(gitPath) || File.Exists(gitPath)) return dir.FullName;
             dir = dir.Parent;
         }
-        throw new InvalidOperationException("找不到 Git Repo 根目錄（.git 資料夾不存在於任何父目錄）");
+        throw new InvalidOperationException("找不到 Git Repo 根目錄（.git 資料夾/檔案不存在於任何父目錄）");
     }
 
     private static async Task RunMigrationsAsync(string repoRoot, string connStr)
     {
+        // Migrations 定義在 OAuth.AuthServer.DB，--project 需指向該專案；
+        // --startup-project 才是 WebAPI（提供 DbContext 的執行期 DI/組態）。
+        // 過去只傳 --project=WebAPI 會導致 dotnet ef 在 WebAPI 組件裡找不到 DbContext 而失敗。
+        var dbProjectPath = Path.Combine(repoRoot, "src", "AuthServer", "OAuth.AuthServer.DB");
         var authServerPath = Path.Combine(repoRoot, "src", "AuthServer", "OAuth.AuthServer.WebAPI");
         var psi = new ProcessStartInfo("dotnet")
         {
-            Arguments        = $"ef database update --project \"{authServerPath}\"",
+            Arguments        = $"ef database update --project \"{dbProjectPath}\" --startup-project \"{authServerPath}\"",
             WorkingDirectory = repoRoot,
             UseShellExecute  = false,
         };
@@ -207,18 +236,26 @@ public class PlaywrightBaseStep(ScenarioContext ctx)
             throw new InvalidOperationException($"DB Migration 失敗（exit code: {p.ExitCode}）");
     }
 
-    private static Process StartService(string repoRoot, string relPath, string urls, string connStr)
+    private static Process StartService(
+        string repoRoot, string relPath, string urls, string connStr,
+        IReadOnlyDictionary<string, string>? extraEnv = null)
     {
         var projectPath = Path.Combine(repoRoot, relPath);
         var psi = new ProcessStartInfo("dotnet")
         {
-            Arguments        = $"run --project \"{projectPath}\"",
+            // --no-launch-profile：launchSettings.json 的預設 profile（例如 AuthServer 的 "http" profile）
+            // 會用自己的 applicationUrl 覆蓋掉這裡設定的 ASPNETCORE_URLS，導致 HTTPS 端點沒有被綁定。
+            Arguments        = $"run --project \"{projectPath}\" --no-launch-profile",
             WorkingDirectory = repoRoot,
             UseShellExecute  = false,
         };
         psi.Environment["ASPNETCORE_URLS"]                     = urls;
         psi.Environment["ASPNETCORE_ENVIRONMENT"]              = "Development";
         psi.Environment["ConnectionStrings__DefaultConnection"] = connStr;
+
+        if (extraEnv is not null)
+            foreach (var (key, value) in extraEnv)
+                psi.Environment[key] = value;
 
         return Process.Start(psi)
             ?? throw new InvalidOperationException($"服務啟動失敗: {relPath}");
