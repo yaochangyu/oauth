@@ -6,7 +6,7 @@ using OAuth.AuthServer.DB;
 
 namespace OAuth.AuthServer.IntegrationTest;
 
-public class AuthServerTestFactory : WebApplicationFactory<Program>
+public class AuthServerTestFactory : WebApplicationFactory<OAuth.AuthServer.WebAPI.Connect.AuthorizationController>
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -33,7 +33,6 @@ public class AuthServerTestFactory : WebApplicationFactory<Program>
                 options.UseNpgsql(connectionString);
                 options.UseOpenIddict();
             });
-
         });
     }
 
@@ -51,5 +50,104 @@ public class AuthServerTestFactory : WebApplicationFactory<Program>
 
         await using var dbContext = new ApplicationDbContext(options);
         await dbContext.Database.MigrateAsync();
+
+        var devOptions = new DbContextOptionsBuilder<OAuth.Developer.WebAPI.Data.DeveloperDbContext>()
+            .UseNpgsql(connectionString)
+            .Options;
+
+        await using var devDbContext = new OAuth.Developer.WebAPI.Data.DeveloperDbContext(devOptions);
+        await devDbContext.Database.ExecuteSqlRawAsync(@"
+            CREATE TABLE IF NOT EXISTS ""DeveloperProfiles"" (
+                ""UserId"" text PRIMARY KEY,
+                ""IsDeveloperEnabled"" boolean NOT NULL,
+                ""OrganizationName"" text NULL,
+                ""ContactEmail"" text NULL,
+                ""RegisteredAt"" timestamp with time zone NOT NULL
+            );");
     }
 }
+
+public class DeveloperTestFactory : WebApplicationFactory<OAuth.Developer.WebAPI.Controllers.ApplicationsController>
+{
+    protected override void ConfigureWebHost(IWebHostBuilder builder)
+    {
+        builder.UseEnvironment("Development");
+
+        builder.ConfigureServices(services =>
+        {
+            var descriptor = services.SingleOrDefault(d =>
+                d.ServiceType == typeof(IDbContextFactory<ApplicationDbContext>));
+            if (descriptor is not null)
+                services.Remove(descriptor);
+
+            var dbContextDescriptor = services.SingleOrDefault(d =>
+                d.ServiceType == typeof(DbContextOptions<ApplicationDbContext>));
+            if (dbContextDescriptor is not null)
+                services.Remove(dbContextDescriptor);
+
+            var devDbContextDescriptor = services.SingleOrDefault(d =>
+                d.ServiceType == typeof(DbContextOptions<OAuth.Developer.WebAPI.Data.DeveloperDbContext>));
+            if (devDbContextDescriptor is not null)
+                services.Remove(devDbContextDescriptor);
+
+            var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
+                ?? throw new InvalidOperationException("測試用 PostgreSQL Connection String 未設定");
+
+            services.AddDbContextFactory<ApplicationDbContext>(options =>
+            {
+                options.UseNpgsql(connectionString);
+                options.UseOpenIddict();
+            });
+
+            services.AddDbContext<OAuth.Developer.WebAPI.Data.DeveloperDbContext>(options =>
+            {
+                options.UseNpgsql(connectionString);
+            });
+
+            services.PostConfigure<Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerOptions>(
+                Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme,
+                options =>
+                {
+                    options.TokenValidationParameters.IssuerSigningKey = TestAssistant.AuthServerRsaSigningKey;
+                });
+        });
+    }
+}
+
+public class AccountTestFactory : WebApplicationFactory<OAuth.Account.WebAPI.Controllers.ConsentsController>
+{
+    protected override void ConfigureWebHost(IWebHostBuilder builder)
+    {
+        builder.UseEnvironment("Development");
+
+        builder.ConfigureServices(services =>
+        {
+            var descriptor = services.SingleOrDefault(d =>
+                d.ServiceType == typeof(IDbContextFactory<ApplicationDbContext>));
+            if (descriptor is not null)
+                services.Remove(descriptor);
+
+            var dbContextDescriptor = services.SingleOrDefault(d =>
+                d.ServiceType == typeof(DbContextOptions<ApplicationDbContext>));
+            if (dbContextDescriptor is not null)
+                services.Remove(dbContextDescriptor);
+
+            var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
+                ?? throw new InvalidOperationException("測試用 PostgreSQL Connection String 未設定");
+
+            services.AddDbContextFactory<ApplicationDbContext>(options =>
+            {
+                options.UseNpgsql(connectionString);
+                options.UseOpenIddict();
+            });
+
+            services.PostConfigure<Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerOptions>(
+                Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme,
+                options =>
+                {
+                    options.TokenValidationParameters.IssuerSigningKey = TestAssistant.AuthServerRsaSigningKey;
+                });
+        });
+    }
+}
+

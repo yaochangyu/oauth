@@ -16,6 +16,7 @@ namespace OAuth.AuthServer.WebAPI.Connect;
 public class AuthorizationController(
     UserManager<ApplicationUser> userManager,
     IOpenIddictApplicationManager applicationManager,
+    IOpenIddictAuthorizationManager authorizationManager,
     IDistributedCache cache) : ControllerBase
 {
     [HttpGet("~/connect/authorize")]
@@ -32,26 +33,40 @@ public class AuthorizationController(
             return Redirect($"/login?returnUrl={Uri.EscapeDataString(returnUrl)}");
         }
 
-        // Consent check: null 或未設定視同 explicit
-        var application = await applicationManager.FindByClientIdAsync(request.ClientId!);
-        var consentType = await applicationManager.GetConsentTypeAsync(application!);
+        var user = await userManager.GetUserAsync(result.Principal)
+            ?? throw new InvalidOperationException("找不到使用者");
 
-        if (string.IsNullOrEmpty(consentType) || consentType == ConsentTypes.Explicit)
+        var application = await applicationManager.FindByClientIdAsync(request.ClientId!)
+            ?? throw new InvalidOperationException("找不到呼叫端應用程式");
+        var consentType = await applicationManager.GetConsentTypeAsync(application);
+        var appId = await applicationManager.GetIdAsync(application);
+
+        // 查詢是否已存在有效的永久授權紀錄 (Permanent Authorization)
+        var authorizations = new List<object>();
+        await foreach (var auth in authorizationManager.FindAsync(
+            subject: user.Id,
+            client: appId!,
+            status: Statuses.Valid,
+            type: AuthorizationTypes.Permanent,
+            scopes: request.GetScopes()))
         {
-            var consentToken = Request.Query["__ct"].ToString();
-            var consentDecision = string.Empty;
-            var consentClientId = string.Empty;
+            authorizations.Add(auth);
+        }
+        var authorization = authorizations.LastOrDefault();
 
-            if (!string.IsNullOrEmpty(consentToken))
+        var consentToken = Request.Query["__ct"].ToString();
+        var consentDecision = string.Empty;
+        var consentClientId = string.Empty;
+
+        if (!string.IsNullOrEmpty(consentToken))
+        {
+            var tokenValue = await cache.GetStringAsync($"consent:{consentToken}");
+            if (tokenValue is not null)
             {
-                var tokenValue = await cache.GetStringAsync($"consent:{consentToken}");
-                if (tokenValue is not null)
-                {
-                    await cache.RemoveAsync($"consent:{consentToken}");
-                    var parts = tokenValue.Split(':', 2);
-                    consentDecision = parts[0];
-                    consentClientId = parts.Length > 1 ? parts[1] : string.Empty;
-                }
+                await cache.RemoveAsync($"consent:{consentToken}");
+                var parts = tokenValue.Split(':', 2);
+                consentDecision = parts[0];
+                consentClientId = parts.Length > 1 ? parts[1] : string.Empty;
             }
 
             if (consentDecision == "denied" && consentClientId == request.ClientId)
@@ -76,9 +91,15 @@ public class AuthorizationController(
                 return Redirect($"/consent?returnUrl={Uri.EscapeDataString(returnUrl)}");
             }
         }
-
-        var user = await userManager.GetUserAsync(result.Principal)
-            ?? throw new InvalidOperationException("找不到使用者");
+        else
+        {
+            // 無 consentToken 時：若無既有永久授權且 Client 為 Explicit Consent，需導向同意頁面
+            if (authorization is null && (string.IsNullOrEmpty(consentType) || consentType == ConsentTypes.Explicit))
+            {
+                var returnUrl = Request.Path + Request.QueryString;
+                return Redirect($"/consent?returnUrl={Uri.EscapeDataString(returnUrl)}");
+            }
+        }
 
         var identity = new ClaimsIdentity(
             OpenIddictServerAspNetCoreDefaults.AuthenticationScheme,
@@ -105,6 +126,20 @@ public class AuthorizationController(
 
         var principal = new ClaimsPrincipal(identity);
         principal.SetScopes(request.GetScopes());
+
+        // 若尚無永久授權，建立新的永久授權紀錄
+        if (authorization is null)
+        {
+            authorization = await authorizationManager.CreateAsync(
+                principal: principal,
+                subject: user.Id,
+                client: appId!,
+                type: AuthorizationTypes.Permanent,
+                scopes: principal.GetScopes());
+        }
+
+        var authId = await authorizationManager.GetIdAsync(authorization);
+        identity.SetAuthorizationId(authId);
 
         return SignIn(principal, OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
     }

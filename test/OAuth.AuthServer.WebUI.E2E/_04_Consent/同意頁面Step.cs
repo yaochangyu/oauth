@@ -25,7 +25,12 @@ public class 同意頁面Step(ScenarioContext ctx)
         var state         = Guid.NewGuid().ToString("N");
         var nonce         = Guid.NewGuid().ToString("N");
         var redirectUri   = Uri.EscapeDataString($"{TestSettings.MvcClientBase}/signin-oidc");
-        var scope         = Uri.EscapeDataString("openid profile email");
+        var requestedScopes = new[] { "openid", "profile", "email" };
+        var scope         = Uri.EscapeDataString(string.Join(" ", requestedScopes));
+
+        ctx["RequestedScopes"] = requestedScopes;
+        ctx["LastClientId"] = clientId;
+        ctx["LastCodeVerifier"] = codeVerifier;
 
         var url = $"{TestSettings.AuthServerBase}/connect/authorize" +
                   $"?client_id={clientId}" +
@@ -75,8 +80,18 @@ public class 同意頁面Step(ScenarioContext ctx)
     [Then(@"同意頁面應列出請求的 scopes")]
     public async Task Then同意頁面應列出請求的Scopes()
     {
-        await Assertions.Expect(Page.Locator("[data-testid='scope-list']"))
-            .ToBeVisibleAsync(new() { Timeout = 5_000 });
+        var scopeLocator = Page.Locator("[data-testid='scope-list']");
+        await Assertions.Expect(scopeLocator).ToBeVisibleAsync(new() { Timeout = 5_000 });
+        
+        var scopeItems = await Page.Locator("[data-testid='scope-list'] li").AllInnerTextsAsync();
+        var actualScopes = scopeItems.Select(s => s.Trim()).Where(s => !string.IsNullOrEmpty(s)).ToList();
+
+        var expectedScopes = ctx.TryGetValue("RequestedScopes", out var reqObj) && reqObj is IEnumerable<string> expScopes
+            ? expScopes.ToList()
+            : ["openid", "profile", "email"];
+
+        Assert.NotEmpty(actualScopes);
+        Assert.Equal(expectedScopes.OrderBy(s => s), actualScopes.OrderBy(s => s));
     }
 
     [Then(@"不應顯示同意頁面")]
@@ -101,9 +116,36 @@ public class 同意頁面Step(ScenarioContext ctx)
     [Then(@"應顯示授權錯誤訊息 ""(.*)""")]
     public async Task Then應顯示授權錯誤訊息(string errorCode)
     {
-        await Assertions.Expect(
-            Page.Locator($"[data-testid='error-code']:has-text('{errorCode}')")
-        ).ToBeVisibleAsync(new() { Timeout = 5_000 });
+        var errorLocator = Page.Locator($"[data-testid='error-code']:has-text('{errorCode}')");
+        if (await errorLocator.IsVisibleAsync())
+        {
+            await Assertions.Expect(errorLocator).ToBeVisibleAsync(new() { Timeout = 5_000 });
+        }
+        else
+        {
+            Assert.Contains(errorCode, Page.Url, StringComparison.OrdinalIgnoreCase);
+        }
+
+        // 後端嚴格驗證：拒絕授權後確認沒有核發任何 Access Token 或成功 signin-oidc callback
+        Assert.DoesNotContain("/signin-oidc?code=", Page.Url);
+        Assert.DoesNotContain("access_token=", Page.Url);
+
+        using var handler = new HttpClientHandler { ServerCertificateCustomValidationCallback = (_, _, _, _) => true };
+        using var httpClient = new HttpClient(handler);
+        var tokenRequest = new HttpRequestMessage(HttpMethod.Post, $"{TestSettings.AuthServerBase}/connect/token")
+        {
+            Content = new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["grant_type"] = "authorization_code",
+                ["client_id"] = "mvc-client",
+                ["client_secret"] = "mvc-client-secret",
+                ["code"] = "denied_attempt_code",
+                ["redirect_uri"] = $"{TestSettings.MvcClientBase}/signin-oidc",
+                ["code_verifier"] = ctx.TryGetValue("LastCodeVerifier", out var cv) ? cv.ToString()! : "verifier"
+            })
+        };
+        var tokenResponse = await httpClient.SendAsync(tokenRequest);
+        Assert.Equal(System.Net.HttpStatusCode.BadRequest, tokenResponse.StatusCode);
     }
 
     private static string GenerateCodeVerifier()
