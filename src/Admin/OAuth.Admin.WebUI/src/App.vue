@@ -32,6 +32,12 @@ const route = useRoute();
           </router-link>
         </li>
         <li class="nav-item">
+          <router-link to="/roles">
+            <span>🏷️</span>
+            <span>角色權限管理</span>
+          </router-link>
+        </li>
+        <li class="nav-item">
           <router-link to="/scopes">
             <span>🎯</span>
             <span>Scope 矩陣設定</span>

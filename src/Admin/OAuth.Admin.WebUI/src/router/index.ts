@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import ReviewDashboardView from '../views/ReviewDashboardView.vue';
 import AppDirectoryView from '../views/AppDirectoryView.vue';
 import UserDirectoryView from '../views/UserDirectoryView.vue';
+import RoleDirectoryView from '../views/RoleDirectoryView.vue';
 import ScopeDirectoryView from '../views/ScopeDirectoryView.vue';
 import AuditLogsView from '../views/AuditLogsView.vue';
 
@@ -29,6 +30,12 @@ const router = createRouter({
       name: 'users',
       component: UserDirectoryView,
       meta: { title: '全站使用者管理' }
+    },
+    {
+      path: '/roles',
+      name: 'roles',
+      component: RoleDirectoryView,
+      meta: { title: '全域角色權限管理' }
     },
     {
       path: '/scopes',

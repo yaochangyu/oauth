@@ -15,6 +15,38 @@ export interface AppDetail {
   requirements: string[];
 }
 
+export interface CreateAppPayload {
+  clientId: string;
+  displayName?: string;
+  clientSecret?: string;
+  clientType?: string;
+  consentType?: string;
+  developer?: string;
+  status?: string;
+  requestReason?: string;
+  redirectUris?: string[];
+  postLogoutRedirectUris?: string[];
+  permissions?: string[];
+  requirements?: string[];
+}
+
+export interface UpdateAppPayload {
+  displayName?: string;
+  clientSecret?: string;
+  clientType?: string;
+  consentType?: string;
+  developer?: string;
+  redirectUris?: string[];
+  postLogoutRedirectUris?: string[];
+  permissions?: string[];
+  requirements?: string[];
+}
+
+export interface RoleSummary {
+  id: string;
+  name: string;
+}
+
 export interface UserSummary {
   id: string;
   userName: string;
@@ -81,7 +113,7 @@ async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
 }
 
 export const adminApi = {
-  // App Reviews
+  // App Reviews & Management
   getPendingApps: () => fetchJson<AppDetail[]>(`${API_BASE}/apps/pending`),
   getApps: (status?: string, filter?: string) => {
     const params = new URLSearchParams();
@@ -91,6 +123,16 @@ export const adminApi = {
     return fetchJson<AppDetail[]>(`${API_BASE}/apps${qs ? `?${qs}` : ''}`);
   },
   getApp: (id: string) => fetchJson<AppDetail>(`${API_BASE}/apps/${encodeURIComponent(id)}`),
+  createApp: (payload: CreateAppPayload) =>
+    fetchJson<{ message: string }>(`${API_BASE}/apps`, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    }),
+  updateApp: (id: string, payload: UpdateAppPayload) =>
+    fetchJson<{ message: string }>(`${API_BASE}/apps/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload)
+    }),
   approveApp: (id: string) =>
     fetchJson<{ message: string }>(`${API_BASE}/apps/${encodeURIComponent(id)}/approve`, { method: 'POST' }),
   rejectApp: (id: string, reason: string) =>
@@ -104,6 +146,23 @@ export const adminApi = {
     fetchJson<{ message: string }>(`${API_BASE}/apps/${encodeURIComponent(id)}/restore`, { method: 'POST' }),
   deleteApp: (id: string) =>
     fetchJson<{ message: string }>(`${API_BASE}/apps/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+
+  // Role Management
+  getRoles: (filter?: string, page: number = 1, pageSize: number = 50) => {
+    const params = new URLSearchParams({ page: page.toString(), pageSize: pageSize.toString() });
+    if (filter) params.append('filter', filter);
+    return fetchJson<RoleSummary[]>(`${API_BASE}/roles?${params.toString()}`);
+  },
+  getRole: (id: string) => fetchJson<RoleSummary>(`${API_BASE}/roles/${encodeURIComponent(id)}`),
+  createRole: (name: string) =>
+    fetchJson<{ message: string }>(`${API_BASE}/roles`, {
+      method: 'POST',
+      body: JSON.stringify({ name })
+    }),
+  deleteRole: (nameOrId: string) =>
+    fetchJson<{ message: string }>(`${API_BASE}/roles/${encodeURIComponent(nameOrId)}`, {
+      method: 'DELETE'
+    }),
 
   // User Management
   getUsers: (filter?: string, page: number = 1, pageSize: number = 50) => {
