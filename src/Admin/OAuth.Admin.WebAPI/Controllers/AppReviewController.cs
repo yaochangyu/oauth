@@ -75,6 +75,13 @@ public class AppReviewController(
         var app = await FindAppByIdOrClientIdAsync(id);
         if (app is null) return NotFound(new { message = "Application not found" });
 
+        var properties = await appManager.GetPropertiesAsync(app);
+        var currentStatus = GetStringProperty(properties, "status") ?? "Sandbox";
+        if (!string.Equals(currentStatus, "InReview", StringComparison.OrdinalIgnoreCase))
+        {
+            return BadRequest(new { message = $"Cannot approve application with status '{currentStatus}'. Application must be in 'InReview' status." });
+        }
+
         var descriptor = new OpenIddictApplicationDescriptor();
         await appManager.PopulateAsync(descriptor, app);
 
@@ -105,6 +112,13 @@ public class AppReviewController(
         var app = await FindAppByIdOrClientIdAsync(id);
         if (app is null) return NotFound(new { message = "Application not found" });
 
+        var properties = await appManager.GetPropertiesAsync(app);
+        var currentStatus = GetStringProperty(properties, "status") ?? "Sandbox";
+        if (!string.Equals(currentStatus, "InReview", StringComparison.OrdinalIgnoreCase))
+        {
+            return BadRequest(new { message = $"Cannot reject application with status '{currentStatus}'. Application must be in 'InReview' status." });
+        }
+
         var descriptor = new OpenIddictApplicationDescriptor();
         await appManager.PopulateAsync(descriptor, app);
 
@@ -131,6 +145,13 @@ public class AppReviewController(
     {
         var app = await FindAppByIdOrClientIdAsync(id);
         if (app is null) return NotFound(new { message = "Application not found" });
+
+        var properties = await appManager.GetPropertiesAsync(app);
+        var currentStatus = GetStringProperty(properties, "status") ?? "Sandbox";
+        if (!string.Equals(currentStatus, "Approved", StringComparison.OrdinalIgnoreCase))
+        {
+            return BadRequest(new { message = $"Cannot suspend application with status '{currentStatus}'. Application must be in 'Approved' status." });
+        }
 
         var appId = await appManager.GetIdAsync(app);
         var descriptor = new OpenIddictApplicationDescriptor();
@@ -164,6 +185,13 @@ public class AppReviewController(
     {
         var app = await FindAppByIdOrClientIdAsync(id);
         if (app is null) return NotFound(new { message = "Application not found" });
+
+        var properties = await appManager.GetPropertiesAsync(app);
+        var currentStatus = GetStringProperty(properties, "status") ?? "Sandbox";
+        if (!string.Equals(currentStatus, "Suspended", StringComparison.OrdinalIgnoreCase))
+        {
+            return BadRequest(new { message = $"Cannot restore application with status '{currentStatus}'. Application must be in 'Suspended' status." });
+        }
 
         var descriptor = new OpenIddictApplicationDescriptor();
         await appManager.PopulateAsync(descriptor, app);
