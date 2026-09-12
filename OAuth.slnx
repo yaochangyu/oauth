@@ -12,6 +12,10 @@
     <Project Path="src/Clients/OAuth.Client.SpaHost/OAuth.Client.SpaHost.csproj" />
     <Project Path="src/Clients/OAuth.Client.WebAPI/OAuth.Client.WebAPI.csproj" />
   </Folder>
+  <Folder Name="/src/Developer/">
+    <Project Path="src/Developer/OAuth.Developer.WebAPI/OAuth.Developer.WebAPI.csproj" />
+    <Project Path="src/Developer/OAuth.Developer.Tests/OAuth.Developer.Tests.csproj" />
+  </Folder>
   <Folder Name="/test/">
     <Project Path="test/OAuth.AuthServer.IntegrationTest/OAuth.AuthServer.IntegrationTest.csproj" />
     <Project Path="test/OAuth.Client.WebAPI.IntegrationTest/OAuth.Client.WebAPI.IntegrationTest.csproj" />
