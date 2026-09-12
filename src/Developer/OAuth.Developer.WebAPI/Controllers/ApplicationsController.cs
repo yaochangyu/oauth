@@ -1,9 +1,12 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OAuth.Developer.WebAPI.Models;
 using OAuth.Developer.WebAPI.Services;
+using System.Security.Claims;
 
 namespace OAuth.Developer.WebAPI.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/v1/developer/apps")]
 public class ApplicationsController(
@@ -13,6 +16,9 @@ public class ApplicationsController(
     public async Task<IActionResult> GetApps(CancellationToken cancellationToken)
     {
         var developerUserId = GetDeveloperUserId();
+        if (string.IsNullOrEmpty(developerUserId))
+            return Unauthorized(new { error = "無法識別使用者身分" });
+
         var apps = await developerApplicationService.GetDeveloperAppsAsync(developerUserId, cancellationToken);
         return Ok(apps);
     }
@@ -20,28 +26,39 @@ public class ApplicationsController(
     [HttpGet("{id}")]
     public async Task<IActionResult> GetApp(string id, CancellationToken cancellationToken)
     {
-        var app = await developerApplicationService.GetAppDetailsAsync(id, cancellationToken);
+        var developerUserId = GetDeveloperUserId();
+        if (string.IsNullOrEmpty(developerUserId))
+            return Unauthorized(new { error = "無法識別使用者身分" });
+
+        var app = await developerApplicationService.FindAppByIdOrClientIdAsync(id, cancellationToken);
         if (app == null)
             return NotFound(new { error = "應用程式不存在" });
 
-        return Ok(app);
+        var details = await developerApplicationService.GetAppDetailsAsync(id, cancellationToken);
+        return Ok(details);
     }
 
     [HttpPost]
     public async Task<IActionResult> CreateApp([FromBody] CreateAppRequest request, CancellationToken cancellationToken)
     {
+        var developerUserId = GetDeveloperUserId();
+        if (string.IsNullOrEmpty(developerUserId))
+            return Unauthorized(new { error = "無法識別使用者身分" });
+
         if (string.IsNullOrWhiteSpace(request.DisplayName))
             return BadRequest(new { error = "DisplayName 為必填欄位" });
 
-        var developerUserId = GetDeveloperUserId();
         var created = await developerApplicationService.CreateAppAsync(developerUserId, request, cancellationToken);
-
         return CreatedAtAction(nameof(GetApp), new { id = created.Id }, created);
     }
 
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateApp(string id, [FromBody] UpdateAppRequest request, CancellationToken cancellationToken)
     {
+        var developerUserId = GetDeveloperUserId();
+        if (string.IsNullOrEmpty(developerUserId))
+            return Unauthorized(new { error = "無法識別使用者身分" });
+
         var app = await developerApplicationService.FindAppByIdOrClientIdAsync(id, cancellationToken);
         if (app == null)
             return NotFound(new { error = "應用程式不存在" });
@@ -53,6 +70,10 @@ public class ApplicationsController(
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteApp(string id, CancellationToken cancellationToken)
     {
+        var developerUserId = GetDeveloperUserId();
+        if (string.IsNullOrEmpty(developerUserId))
+            return Unauthorized(new { error = "無法識別使用者身分" });
+
         var app = await developerApplicationService.FindAppByIdOrClientIdAsync(id, cancellationToken);
         if (app == null)
             return NotFound(new { error = "應用程式不存在" });
@@ -61,12 +82,9 @@ public class ApplicationsController(
         return NoContent();
     }
 
-    private string GetDeveloperUserId()
+    private string? GetDeveloperUserId()
     {
-        if (Request.Headers.TryGetValue("X-Developer-UserId", out var headerUserId) && !string.IsNullOrWhiteSpace(headerUserId))
-            return headerUserId.ToString();
-
-        var sub = User.FindFirst("sub")?.Value ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-        return sub ?? "default_developer_user";
+        return User.FindFirst("sub")?.Value 
+            ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
     }
 }

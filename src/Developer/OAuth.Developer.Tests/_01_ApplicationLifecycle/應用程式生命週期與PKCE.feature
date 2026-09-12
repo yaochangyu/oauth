@@ -2,9 +2,7 @@ Feature: 應用程式生命週期與PKCE強制防護
 
   Background: 初始化測試環境
     Given 初始化測試伺服器
-    And 調用端已準備 Header 參數
-      | X-Developer-UserId   |
-      | dev_user_test_001    |
+    And 調用端已使用開發者身分 "dev_user_test_001" 取得有效 JWT Token
 
   Scenario: 建立機密型 Web 應用程式並強制要求 PKCE
     Given 調用端已準備 Body 參數(Json)

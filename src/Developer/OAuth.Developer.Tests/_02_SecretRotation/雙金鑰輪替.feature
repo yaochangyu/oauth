@@ -2,9 +2,7 @@ Feature: 雙金鑰輪替與零停機過渡機制
 
   Background: 初始化測試環境
     Given 初始化測試伺服器
-    And 調用端已準備 Header 參數
-      | X-Developer-UserId   |
-      | dev_user_test_002    |
+    And 調用端已使用開發者身分 "dev_user_test_002" 取得有效 JWT Token
 
   Scenario: 完整雙金鑰輪替生命週期驗證（建立 -> 輪替 -> 雙金鑰並存驗證 -> 廢止舊金鑰 -> 舊金鑰失效驗證）
     # 步驟 1: 建立機密型 Web App，取得初始金鑰

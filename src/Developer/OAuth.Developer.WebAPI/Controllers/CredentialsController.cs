@@ -1,9 +1,12 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OAuth.Developer.WebAPI.Models;
 using OAuth.Developer.WebAPI.Services;
+using System.Security.Claims;
 
 namespace OAuth.Developer.WebAPI.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/v1/developer/apps/{id}")]
 public class CredentialsController(
@@ -13,6 +16,10 @@ public class CredentialsController(
     [HttpGet("credentials")]
     public async Task<IActionResult> GetCredentials(string id, CancellationToken cancellationToken)
     {
+        var developerUserId = GetDeveloperUserId();
+        if (string.IsNullOrEmpty(developerUserId))
+            return Unauthorized(new { error = "無法識別使用者身分" });
+
         var app = await developerApplicationService.FindAppByIdOrClientIdAsync(id, cancellationToken);
         if (app == null)
             return NotFound(new { error = "應用程式不存在" });
@@ -24,6 +31,10 @@ public class CredentialsController(
     [HttpPost("rotate-secret")]
     public async Task<IActionResult> RotateSecret(string id, CancellationToken cancellationToken)
     {
+        var developerUserId = GetDeveloperUserId();
+        if (string.IsNullOrEmpty(developerUserId))
+            return Unauthorized(new { error = "無法識別使用者身分" });
+
         var app = await developerApplicationService.FindAppByIdOrClientIdAsync(id, cancellationToken);
         if (app == null)
             return NotFound(new { error = "應用程式不存在" });
@@ -42,6 +53,10 @@ public class CredentialsController(
     [HttpPost("revoke-retiring-secret")]
     public async Task<IActionResult> RevokeRetiringSecret(string id, CancellationToken cancellationToken)
     {
+        var developerUserId = GetDeveloperUserId();
+        if (string.IsNullOrEmpty(developerUserId))
+            return Unauthorized(new { error = "無法識別使用者身分" });
+
         var app = await developerApplicationService.FindAppByIdOrClientIdAsync(id, cancellationToken);
         if (app == null)
             return NotFound(new { error = "應用程式不存在" });
@@ -53,5 +68,11 @@ public class CredentialsController(
             Success = true,
             Message = "舊金鑰已成功立即作廢，目前僅新金鑰具備驗證效力。",
         });
+    }
+
+    private string? GetDeveloperUserId()
+    {
+        return User.FindFirst("sub")?.Value 
+            ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
     }
 }

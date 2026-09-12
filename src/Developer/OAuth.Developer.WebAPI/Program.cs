@@ -1,6 +1,9 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using OAuth.AuthServer.DB;
 using OAuth.Developer.WebAPI.Services;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,11 +19,43 @@ builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
     options.UseOpenIddict();
 });
 
+var signingKey = builder.Configuration["Jwt:SigningKey"] ?? "DeveloperPortalSecretKeyForJwtAuthenticationTest2026!";
+var authority = builder.Configuration["AuthServer:Authority"] ?? "https://localhost:7001";
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.Authority = authority;
+    options.RequireHttpsMetadata = false;
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = false,
+        ValidateAudience = false,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey)),
+        NameClaimType = "name",
+        RoleClaimType = "role",
+    };
+});
+
+builder.Services.AddAuthorization();
+
 builder.Services.AddOpenIddict()
     .AddCore(options =>
     {
         options.UseEntityFrameworkCore()
                .UseDbContext<ApplicationDbContext>();
+    })
+    .AddValidation(options =>
+    {
+        options.SetIssuer(new Uri(authority));
+        options.UseSystemNetHttp();
+        options.UseAspNetCore();
     });
 
 builder.Services.AddScoped<SecretRotationManager>();
@@ -54,6 +89,7 @@ app.UseCors("dev_portal_cors");
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

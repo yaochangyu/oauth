@@ -152,7 +152,8 @@ public class BaseStep : Steps
     public void Then調用端應收到HTTP狀態碼為(int expectedStatusCode)
     {
         var response = (HttpResponseMessage)this.ScenarioContext["Response"];
-        ((int)response.StatusCode).Should().Be(expectedStatusCode);
+        var responseBody = (string)this.ScenarioContext["ResponseBody"];
+        ((int)response.StatusCode).Should().Be(expectedStatusCode, $"Response body was: {responseBody}");
     }
 
     [Then(@"回應內容驗證")]

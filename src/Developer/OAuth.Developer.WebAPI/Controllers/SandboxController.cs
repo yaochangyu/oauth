@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OAuth.Developer.WebAPI.Models;
 using OAuth.Developer.WebAPI.Services;
@@ -6,6 +7,7 @@ using System.Web;
 
 namespace OAuth.Developer.WebAPI.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/v1/developer/sandbox")]
 public class SandboxController(

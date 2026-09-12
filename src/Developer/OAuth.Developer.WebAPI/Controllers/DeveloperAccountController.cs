@@ -1,20 +1,25 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OAuth.Developer.WebAPI.Models;
 using System.Collections.Concurrent;
+using System.Security.Claims;
 
 namespace OAuth.Developer.WebAPI.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/v1/developer/account")]
 public class DeveloperAccountController : ControllerBase
 {
-    // In-memory / cache store for developer profiles (can be augmented by DB user claims)
+    // In-memory / cache store for developer profiles (can be augmented by DB user claims / DeveloperDbContext)
     private static readonly ConcurrentDictionary<string, DeveloperStatusResponse> DeveloperProfiles = new();
 
     [HttpPost("enable")]
     public IActionResult EnableDeveloper([FromBody] EnableDeveloperRequest request)
     {
         var userId = GetDeveloperUserId();
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized(new { error = "無法識別使用者身分" });
 
         var profile = new DeveloperStatusResponse
         {
@@ -32,6 +37,9 @@ public class DeveloperAccountController : ControllerBase
     public IActionResult GetStatus()
     {
         var userId = GetDeveloperUserId();
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized(new { error = "無法識別使用者身分" });
+
         if (DeveloperProfiles.TryGetValue(userId, out var profile))
         {
             return Ok(profile);
@@ -39,7 +47,7 @@ public class DeveloperAccountController : ControllerBase
 
         return Ok(new DeveloperStatusResponse
         {
-            IsDeveloperEnabled = true, // Default enabled in dev / registered users
+            IsDeveloperEnabled = true,
             OrganizationName = "Default Developer Organization",
             ContactEmail = "developer@example.com",
             RegisteredAt = DateTimeOffset.UtcNow,
@@ -50,6 +58,9 @@ public class DeveloperAccountController : ControllerBase
     public IActionResult UpdateProfile([FromBody] EnableDeveloperRequest request)
     {
         var userId = GetDeveloperUserId();
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized(new { error = "無法識別使用者身分" });
+
         var profile = new DeveloperStatusResponse
         {
             IsDeveloperEnabled = true,
@@ -61,12 +72,9 @@ public class DeveloperAccountController : ControllerBase
         return Ok(profile);
     }
 
-    private string GetDeveloperUserId()
+    private string? GetDeveloperUserId()
     {
-        if (Request.Headers.TryGetValue("X-Developer-UserId", out var headerUserId) && !string.IsNullOrWhiteSpace(headerUserId))
-            return headerUserId.ToString();
-
-        var sub = User.FindFirst("sub")?.Value ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-        return sub ?? "default_developer_user";
+        return User.FindFirst("sub")?.Value 
+            ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
     }
 }
