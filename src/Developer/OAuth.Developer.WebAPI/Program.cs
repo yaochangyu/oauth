@@ -25,8 +25,8 @@ builder.Services.AddDbContext<DeveloperDbContext>(options =>
     options.UseNpgsql(connectionString);
 });
 
-var signingKey = builder.Configuration["Jwt:SigningKey"] ?? "DeveloperPortalSecretKeyForJwtAuthenticationTest2026!";
 var authority = builder.Configuration["AuthServer:Authority"] ?? "https://localhost:7001";
+var audience = builder.Configuration["AuthServer:Audience"] ?? "api";
 
 builder.Services.AddAuthentication(options =>
 {
@@ -36,14 +36,16 @@ builder.Services.AddAuthentication(options =>
 .AddJwtBearer(options =>
 {
     options.Authority = authority;
+    options.Audience = audience;
     options.RequireHttpsMetadata = false;
     options.TokenValidationParameters = new TokenValidationParameters
     {
-        ValidateIssuer = false,
-        ValidateAudience = false,
+        ValidateIssuer = true,
+        ValidIssuer = authority,
+        ValidateAudience = true,
+        ValidAudience = audience,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey)),
         NameClaimType = "name",
         RoleClaimType = "role",
     };
@@ -56,12 +58,6 @@ builder.Services.AddOpenIddict()
     {
         options.UseEntityFrameworkCore()
                .UseDbContext<ApplicationDbContext>();
-    })
-    .AddValidation(options =>
-    {
-        options.SetIssuer(new Uri(authority));
-        options.UseSystemNetHttp();
-        options.UseAspNetCore();
     });
 
 builder.Services.AddScoped<SecretRotationManager>();

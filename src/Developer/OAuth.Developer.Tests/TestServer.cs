@@ -43,6 +43,13 @@ public class DeveloperTestFactory : WebApplicationFactory<Program>
             {
                 options.UseNpgsql(connectionString);
             });
+
+            services.PostConfigure<Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerOptions>(
+                Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme,
+                options =>
+                {
+                    options.TokenValidationParameters.IssuerSigningKey = TestAssistant.AuthServerRsaSigningKey;
+                });
         });
     }
 
