@@ -1,4 +1,4 @@
-namespace OAuth.Clients.PlaywrightTest;
+namespace OAuth.AuthServer.WebUI.E2E;
 
 public static class TestSettings
 {

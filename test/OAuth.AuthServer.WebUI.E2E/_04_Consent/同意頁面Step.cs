@@ -4,7 +4,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace OAuth.Clients.PlaywrightTest;
+namespace OAuth.AuthServer.WebUI.E2E;
 
 [Binding]
 public class 同意頁面Step(ScenarioContext ctx)

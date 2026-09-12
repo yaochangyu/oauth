@@ -1,7 +1,7 @@
 using Microsoft.Playwright;
 using Reqnroll;
 
-namespace OAuth.Clients.PlaywrightTest;
+namespace OAuth.AuthServer.WebUI.E2E;
 
 [Binding]
 public class MvcClient驗證流程Step(ScenarioContext ctx)

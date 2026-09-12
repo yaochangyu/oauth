@@ -6,7 +6,7 @@ using Testcontainers.PostgreSql;
 
 [assembly: CollectionBehavior(DisableTestParallelization = true)]
 
-namespace OAuth.Clients.PlaywrightTest;
+namespace OAuth.AuthServer.WebUI.E2E;
 
 /// <summary>
 /// 全域服務生命週期（[BeforeTestRun]/[AfterTestRun]）+ 每個 Scenario 的瀏覽器建立/釋放。
