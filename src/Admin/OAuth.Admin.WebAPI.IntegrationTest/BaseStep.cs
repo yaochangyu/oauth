@@ -52,6 +52,11 @@ public class BaseStep : Steps
             BaseAddress = new Uri("https://localhost/"),
         });
         this.ScenarioContext["HttpClient"] = client;
+        this.ScenarioContext["Headers"] = new Dictionary<string, string>
+        {
+            ["X-Test-User"] = "admin",
+            ["X-Test-Role"] = "Administrator"
+        };
     }
 
     [Given(@"管理員已準備 Header 參數")]

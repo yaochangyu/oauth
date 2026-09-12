@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OAuth.Admin.WebAPI.Models;
 using OAuth.Admin.WebAPI.Services;
@@ -5,6 +6,7 @@ using OAuth.Admin.WebAPI.Services;
 namespace OAuth.Admin.WebAPI.Controllers;
 
 [ApiController]
+[Authorize(Roles = "Administrator,admin")]
 [Route("api/v1/admin/audit-logs")]
 public class AuditLogController(IAuditLogService auditLogService) : ControllerBase
 {

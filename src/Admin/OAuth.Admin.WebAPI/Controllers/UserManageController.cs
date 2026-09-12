@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using OAuth.Admin.WebAPI.Models;
@@ -7,6 +8,7 @@ using OAuth.AuthServer.DB;
 namespace OAuth.Admin.WebAPI.Controllers;
 
 [ApiController]
+[Authorize(Roles = "Administrator,admin")]
 [Route("api/v1/admin/users")]
 public class UserManageController(
     UserManager<ApplicationUser> userManager,

@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using System.Text.Json;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OAuth.Admin.WebAPI.Models;
 using OAuth.Admin.WebAPI.Services;
@@ -9,6 +10,7 @@ using static OpenIddict.Abstractions.OpenIddictConstants;
 namespace OAuth.Admin.WebAPI.Controllers;
 
 [ApiController]
+[Authorize(Roles = "Administrator,admin")]
 [Route("api/v1/admin/apps")]
 public class AppReviewController(
     IOpenIddictApplicationManager appManager,

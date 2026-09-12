@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using System.Text.Json;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OAuth.Admin.WebAPI.Models;
 using OAuth.Admin.WebAPI.Services;
@@ -8,6 +9,7 @@ using OpenIddict.Abstractions;
 namespace OAuth.Admin.WebAPI.Controllers;
 
 [ApiController]
+[Authorize(Roles = "Administrator,admin")]
 [Route("api/v1/admin/scopes")]
 public class ScopeManageController(
     IOpenIddictScopeManager scopeManager,

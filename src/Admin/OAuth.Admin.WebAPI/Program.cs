@@ -1,5 +1,7 @@
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using OAuth.Admin.WebAPI;
 using OAuth.Admin.WebAPI.Services;
 using OAuth.AuthServer.DB;
 
@@ -36,6 +38,39 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
     })
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
+
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.Events.OnRedirectToLogin = context =>
+    {
+        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+        return Task.CompletedTask;
+    };
+    options.Events.OnRedirectToAccessDenied = context =>
+    {
+        context.Response.StatusCode = StatusCodes.Status403Forbidden;
+        return Task.CompletedTask;
+    };
+});
+
+// 測試與開發環境支援 TestAuthHandler 模擬授權驗證
+if (builder.Environment.IsEnvironment("Test") || builder.Environment.IsDevelopment())
+{
+    builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultScheme = TestAuthHandler.SchemeName;
+        options.DefaultAuthenticateScheme = TestAuthHandler.SchemeName;
+        options.DefaultChallengeScheme = TestAuthHandler.SchemeName;
+        options.DefaultForbidScheme = TestAuthHandler.SchemeName;
+    })
+    .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(TestAuthHandler.SchemeName, null);
+}
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdministratorOnly", policy =>
+        policy.RequireRole("Administrator", "admin"));
+});
 
 builder.Services.AddOpenIddict()
     .AddCore(options =>
