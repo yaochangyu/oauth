@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using OAuth.AuthServer.DB;
+using OAuth.Developer.WebAPI.Data;
 using OAuth.Developer.WebAPI.Services;
 using System.Text;
 
@@ -17,6 +18,11 @@ builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
 {
     options.UseNpgsql(connectionString);
     options.UseOpenIddict();
+});
+
+builder.Services.AddDbContext<DeveloperDbContext>(options =>
+{
+    options.UseNpgsql(connectionString);
 });
 
 var signingKey = builder.Configuration["Jwt:SigningKey"] ?? "DeveloperPortalSecretKeyForJwtAuthenticationTest2026!";
@@ -77,6 +83,20 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+// Ensure Developer database schema is created
+using (var scope = app.Services.CreateScope())
+{
+    var devDbContext = scope.ServiceProvider.GetRequiredService<DeveloperDbContext>();
+    devDbContext.Database.ExecuteSqlRaw(@"
+        CREATE TABLE IF NOT EXISTS ""DeveloperProfiles"" (
+            ""UserId"" text PRIMARY KEY,
+            ""IsDeveloperEnabled"" boolean NOT NULL,
+            ""OrganizationName"" text NULL,
+            ""ContactEmail"" text NULL,
+            ""RegisteredAt"" timestamp with time zone NOT NULL
+        );");
+}
 
 if (app.Environment.IsDevelopment())
 {

@@ -64,6 +64,13 @@ public class DeveloperTestFactory : WebApplicationFactory<Program>
             .Options;
 
         await using var devDbContext = new DeveloperDbContext(devOptions);
-        await devDbContext.Database.EnsureCreatedAsync();
+        await devDbContext.Database.ExecuteSqlRawAsync(@"
+            CREATE TABLE IF NOT EXISTS ""DeveloperProfiles"" (
+                ""UserId"" text PRIMARY KEY,
+                ""IsDeveloperEnabled"" boolean NOT NULL,
+                ""OrganizationName"" text NULL,
+                ""ContactEmail"" text NULL,
+                ""RegisteredAt"" timestamp with time zone NOT NULL
+            );");
     }
 }
