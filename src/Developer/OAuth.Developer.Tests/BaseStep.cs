@@ -57,6 +57,44 @@ public class BaseStep : Steps
         this.ScenarioContext["HttpClient"] = client;
     }
 
+    [Given(@"調用端已使用開發者身分 ""(.*)"" 取得有效 JWT Token")]
+    [When(@"調用端已使用開發者身分 ""(.*)"" 取得有效 JWT Token")]
+    public void Given調用端已使用開發者身分取得有效JWTToken(string userId)
+    {
+        var token = TestAssistant.GenerateTestJwtToken(userId);
+        var headers = this.ScenarioContext.ContainsKey("Headers")
+            ? (Dictionary<string, string>)this.ScenarioContext["Headers"]
+            : new Dictionary<string, string>();
+
+        headers["Authorization"] = $"Bearer {token}";
+        this.ScenarioContext["Headers"] = headers;
+        this.ScenarioContext["CurrentDeveloperUserId"] = userId;
+    }
+
+    [Given(@"調用端未帶入任何認證 Token")]
+    [When(@"調用端未帶入任何認證 Token")]
+    public void Given調用端未帶入任何認證Token()
+    {
+        if (this.ScenarioContext.ContainsKey("Headers"))
+        {
+            var headers = (Dictionary<string, string>)this.ScenarioContext["Headers"];
+            headers.Remove("Authorization");
+            this.ScenarioContext["Headers"] = headers;
+        }
+    }
+
+    [Given(@"調用端使用無效的 JWT Token")]
+    [When(@"調用端使用無效的 JWT Token")]
+    public void Given調用端使用無效的JWTToken()
+    {
+        var headers = this.ScenarioContext.ContainsKey("Headers")
+            ? (Dictionary<string, string>)this.ScenarioContext["Headers"]
+            : new Dictionary<string, string>();
+
+        headers["Authorization"] = "Bearer invalid_token_xyz";
+        this.ScenarioContext["Headers"] = headers;
+    }
+
     [Given(@"調用端已準備 Header 參數")]
     public void Given調用端已準備Header參數(Table table)
     {
