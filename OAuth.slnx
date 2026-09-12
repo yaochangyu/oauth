@@ -1,5 +1,9 @@
 <Solution>
   <Folder Name="/src/" />
+  <Folder Name="/src/Account/">
+    <Project Path="src/Account/OAuth.Account.WebAPI/OAuth.Account.WebAPI.csproj" />
+    <Project Path="src/Account/OAuth.Account.Tests/OAuth.Account.Tests.csproj" />
+  </Folder>
   <Folder Name="/src/Admin/">
     <Project Path="src/Admin/OAuth.Admin.WebAPI/OAuth.Admin.WebAPI.csproj" />
     <Project Path="src/Admin/OAuth.Admin.WebAPI.IntegrationTest/OAuth.Admin.WebAPI.IntegrationTest.csproj" />
