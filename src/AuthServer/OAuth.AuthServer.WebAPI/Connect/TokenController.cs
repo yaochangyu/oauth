@@ -13,7 +13,8 @@ namespace OAuth.AuthServer.WebAPI.Connect;
 [ApiController]
 public class TokenController(
     UserManager<ApplicationUser> userManager,
-    SignInManager<ApplicationUser> signInManager) : ControllerBase
+    SignInManager<ApplicationUser> signInManager,
+    IOpenIddictAuthorizationManager authorizationManager) : ControllerBase
 {
     [HttpPost("~/connect/token")]
     public async Task<IActionResult> Exchange(CancellationToken cancellationToken)
@@ -35,9 +36,28 @@ public class TokenController(
             if (!await signInManager.CanSignInAsync(user))
                 return Forbid(OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
 
+            var authorizationId = result.Principal.GetAuthorizationId();
+            if (!string.IsNullOrEmpty(authorizationId))
+            {
+                var auth = await authorizationManager.FindByIdAsync(authorizationId);
+                if (auth is null || !await authorizationManager.HasStatusAsync(auth, Statuses.Valid))
+                {
+                    return Forbid(
+                        authenticationSchemes: OpenIddictServerAspNetCoreDefaults.AuthenticationScheme,
+                        properties: new AuthenticationProperties(new Dictionary<string, string?>
+                        {
+                            [OpenIddictServerAspNetCoreConstants.Properties.Error] = Errors.InvalidGrant,
+                            [OpenIddictServerAspNetCoreConstants.Properties.ErrorDescription] = "The authorization is no longer valid."
+                        }));
+                }
+            }
+
             var identity = new ClaimsIdentity(
                 result.Principal!.Claims,
                 OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
+
+            if (!string.IsNullOrEmpty(authorizationId))
+                identity.SetAuthorizationId(authorizationId);
 
             identity.SetClaim(Claims.Subject, user.Id)
                     .SetClaim(Claims.Email, user.Email)
