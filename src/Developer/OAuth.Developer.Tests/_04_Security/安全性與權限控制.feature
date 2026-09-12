@@ -67,3 +67,99 @@ Feature: 安全性與權限控制
     And 回應內容驗證
       | 欄位路徑          | 驗證方式   | 預期值            |
       | $[0].displayName  | 字串等於   | Alice Private App |
+
+  # =========================================================================
+  # 【Blocker 3 驗證】跨使用者操作 App 資源應回傳 403 Forbidden 防止 IDOR 越權存取
+  # =========================================================================
+
+  Scenario: 跨使用者查詢、修改、刪除 App 詳細資訊應回傳 403
+    # Alice 建立專屬 App
+    Given 調用端已使用開發者身分 "dev_user_alice" 取得有效 JWT Token
+    And 調用端已準備 Body 參數(Json)
+      """
+      {
+        "displayName": "Alice Confidential Web App",
+        "appType": "Web",
+        "redirectUris": ["https://alice.com/oauth/cb"]
+      }
+      """
+    When 調用端發送 "POST" 請求至 "/api/v1/developer/apps"
+    Then 調用端應收到 HTTP 狀態碼為 "201"
+    And 從回應中儲存變數 "AliceAppId" 為 JSON 欄位 "$.id"
+
+    # Bob 嘗試查詢 Alice 的 App -> 403
+    Given 調用端已使用開發者身分 "dev_user_bob" 取得有效 JWT Token
+    When 調用端發送 "GET" 請求至 "/api/v1/developer/apps/{{AliceAppId}}"
+    Then 調用端應收到 HTTP 狀態碼為 "403"
+
+    # Bob 嘗試修改 Alice 的 App -> 403
+    Given 調用端已準備 Body 參數(Json)
+      """
+      {
+        "displayName": "Hacked Display Name By Bob"
+      }
+      """
+    When 調用端發送 "PUT" 請求至 "/api/v1/developer/apps/{{AliceAppId}}"
+    Then 調用端應收到 HTTP 狀態碼為 "403"
+
+    # Bob 嘗試刪除 Alice 的 App -> 403
+    When 調用端發送 "DELETE" 請求至 "/api/v1/developer/apps/{{AliceAppId}}"
+    Then 調用端應收到 HTTP 狀態碼為 "403"
+
+  Scenario: 跨使用者存取金鑰、輪替金鑰、作廢舊金鑰應回傳 403
+    # Alice 建立專屬 App
+    Given 調用端已使用開發者身分 "dev_user_alice" 取得有效 JWT Token
+    And 調用端已準備 Body 參數(Json)
+      """
+      {
+        "displayName": "Alice Payment Portal App",
+        "appType": "Web",
+        "redirectUris": ["https://alice.com/cb"]
+      }
+      """
+    When 調用端發送 "POST" 請求至 "/api/v1/developer/apps"
+    Then 調用端應收到 HTTP 狀態碼為 "201"
+    And 從回應中儲存變數 "AliceKeyAppId" 為 JSON 欄位 "$.id"
+
+    # Bob 嘗試讀取 Alice 的金鑰 -> 403
+    Given 調用端已使用開發者身分 "dev_user_bob" 取得有效 JWT Token
+    When 調用端發送 "GET" 請求至 "/api/v1/developer/apps/{{AliceKeyAppId}}/credentials"
+    Then 調用端應收到 HTTP 狀態碼為 "403"
+
+    # Bob 嘗試觸發 Alice 的金鑰輪替 -> 403
+    When 調用端發送 "POST" 請求至 "/api/v1/developer/apps/{{AliceKeyAppId}}/rotate-secret"
+    Then 調用端應收到 HTTP 狀態碼為 "403"
+
+    # Bob 嘗試作廢 Alice 的舊金鑰 -> 403
+    When 調用端發送 "POST" 請求至 "/api/v1/developer/apps/{{AliceKeyAppId}}/revoke-retiring-secret"
+    Then 調用端應收到 HTTP 狀態碼為 "403"
+
+  Scenario: 跨使用者送出審核申請與查詢審核狀態應回傳 403
+    # Alice 建立專屬 App
+    Given 調用端已使用開發者身分 "dev_user_alice" 取得有效 JWT Token
+    And 調用端已準備 Body 參數(Json)
+      """
+      {
+        "displayName": "Alice App For Review",
+        "appType": "Web",
+        "redirectUris": ["https://alice.com/cb"]
+      }
+      """
+    When 調用端發送 "POST" 請求至 "/api/v1/developer/apps"
+    Then 調用端應收到 HTTP 狀態碼為 "201"
+    And 從回應中儲存變數 "AliceReviewAppId" 為 JSON 欄位 "$.id"
+
+    # Bob 嘗試替 Alice 送出審核申請 -> 403
+    Given 調用端已使用開發者身分 "dev_user_bob" 取得有效 JWT Token
+    And 調用端已準備 Body 參數(Json)
+      """
+      {
+        "notes": "Bob is trying to submit review"
+      }
+      """
+    When 調用端發送 "POST" 請求至 "/api/v1/developer/apps/{{AliceReviewAppId}}/submit-review"
+    Then 調用端應收到 HTTP 狀態碼為 "403"
+
+    # Bob 嘗試查詢 Alice 的審核狀態 -> 403
+    When 調用端發送 "GET" 請求至 "/api/v1/developer/apps/{{AliceReviewAppId}}/review-status"
+    Then 調用端應收到 HTTP 狀態碼為 "403"
