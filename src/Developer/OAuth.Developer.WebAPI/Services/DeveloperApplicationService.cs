@@ -132,6 +132,20 @@ public class DeveloperApplicationService(
         return (OpenIddictEntityFrameworkCoreApplication?)await applicationManager.FindByClientIdAsync(idOrClientId, cancellationToken);
     }
 
+    public async Task<bool> IsAppOwnedByDeveloperAsync(
+        OpenIddictEntityFrameworkCoreApplication app,
+        string developerUserId,
+        CancellationToken cancellationToken = default)
+    {
+        var properties = await SecretRotationManager.GetPropertiesDictionaryAsync(app, cancellationToken);
+        if (properties.TryGetValue(DeveloperAppConstants.PropDeveloperUserId, out var devIdElement))
+        {
+            var owner = devIdElement.GetString();
+            return string.Equals(owner, developerUserId, StringComparison.OrdinalIgnoreCase);
+        }
+        return false;
+    }
+
     public async Task<AppResponse?> GetAppDetailsAsync(
         string idOrClientId,
         CancellationToken cancellationToken = default)

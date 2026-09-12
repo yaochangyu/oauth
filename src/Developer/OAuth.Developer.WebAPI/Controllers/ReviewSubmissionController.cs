@@ -23,6 +23,9 @@ public class ReviewSubmissionController(
         if (app == null)
             return NotFound(new { error = "應用程式不存在" });
 
+        if (!await developerApplicationService.IsAppOwnedByDeveloperAsync(app, developerUserId, cancellationToken))
+            return StatusCode(StatusCodes.Status403Forbidden, new { error = "無權提交此應用程式審核" });
+
         var result = await developerApplicationService.SubmitReviewAsync(app, request?.Notes, cancellationToken);
         return Ok(result);
     }
@@ -37,6 +40,9 @@ public class ReviewSubmissionController(
         var app = await developerApplicationService.FindAppByIdOrClientIdAsync(id, cancellationToken);
         if (app == null)
             return NotFound(new { error = "應用程式不存在" });
+
+        if (!await developerApplicationService.IsAppOwnedByDeveloperAsync(app, developerUserId, cancellationToken))
+            return StatusCode(StatusCodes.Status403Forbidden, new { error = "無權查詢此應用程式審核狀態" });
 
         var details = await developerApplicationService.GetAppDetailsAsync(id, cancellationToken);
         return Ok(new ReviewStatusResponse

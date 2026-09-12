@@ -34,6 +34,9 @@ public class ApplicationsController(
         if (app == null)
             return NotFound(new { error = "應用程式不存在" });
 
+        if (!await developerApplicationService.IsAppOwnedByDeveloperAsync(app, developerUserId, cancellationToken))
+            return StatusCode(StatusCodes.Status403Forbidden, new { error = "無權存取此應用程式資源" });
+
         var details = await developerApplicationService.GetAppDetailsAsync(id, cancellationToken);
         return Ok(details);
     }
@@ -63,6 +66,9 @@ public class ApplicationsController(
         if (app == null)
             return NotFound(new { error = "應用程式不存在" });
 
+        if (!await developerApplicationService.IsAppOwnedByDeveloperAsync(app, developerUserId, cancellationToken))
+            return StatusCode(StatusCodes.Status403Forbidden, new { error = "無權修改此應用程式資源" });
+
         var updated = await developerApplicationService.UpdateAppAsync(app, request, cancellationToken);
         return Ok(updated);
     }
@@ -77,6 +83,9 @@ public class ApplicationsController(
         var app = await developerApplicationService.FindAppByIdOrClientIdAsync(id, cancellationToken);
         if (app == null)
             return NotFound(new { error = "應用程式不存在" });
+
+        if (!await developerApplicationService.IsAppOwnedByDeveloperAsync(app, developerUserId, cancellationToken))
+            return StatusCode(StatusCodes.Status403Forbidden, new { error = "無權刪除此應用程式資源" });
 
         await developerApplicationService.DeleteAppAsync(app, cancellationToken);
         return NoContent();

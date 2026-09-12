@@ -24,6 +24,9 @@ public class CredentialsController(
         if (app == null)
             return NotFound(new { error = "應用程式不存在" });
 
+        if (!await developerApplicationService.IsAppOwnedByDeveloperAsync(app, developerUserId, cancellationToken))
+            return StatusCode(StatusCodes.Status403Forbidden, new { error = "無權存取此應用程式金鑰" });
+
         var creds = await secretRotationManager.GetCredentialsInfoAsync(app, cancellationToken);
         return Ok(creds);
     }
@@ -38,6 +41,9 @@ public class CredentialsController(
         var app = await developerApplicationService.FindAppByIdOrClientIdAsync(id, cancellationToken);
         if (app == null)
             return NotFound(new { error = "應用程式不存在" });
+
+        if (!await developerApplicationService.IsAppOwnedByDeveloperAsync(app, developerUserId, cancellationToken))
+            return StatusCode(StatusCodes.Status403Forbidden, new { error = "無權輪替此應用程式金鑰" });
 
         var (newSecret, retiringExpiresAt) = await secretRotationManager.RotateSecretAsync(app, cancellationToken);
 
@@ -60,6 +66,9 @@ public class CredentialsController(
         var app = await developerApplicationService.FindAppByIdOrClientIdAsync(id, cancellationToken);
         if (app == null)
             return NotFound(new { error = "應用程式不存在" });
+
+        if (!await developerApplicationService.IsAppOwnedByDeveloperAsync(app, developerUserId, cancellationToken))
+            return StatusCode(StatusCodes.Status403Forbidden, new { error = "無權作廢此應用程式金鑰" });
 
         await secretRotationManager.RevokeRetiringSecretAsync(app, cancellationToken);
 
