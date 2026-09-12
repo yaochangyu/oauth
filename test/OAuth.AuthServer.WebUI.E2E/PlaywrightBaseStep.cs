@@ -12,11 +12,12 @@ namespace OAuth.AuthServer.WebUI.E2E;
 /// 全域服務生命週期（[BeforeTestRun]/[AfterTestRun]）+ 每個 Scenario 的瀏覽器建立/釋放。
 /// 共用 Step（開啟瀏覽器、填寫登入表單）。
 ///
-/// 預設模式（E2E_USE_TESTCONTAINERS 未設定或 false）：
-///   假設 dev 環境服務已啟動（task docker-up + 各 task *-dev 已執行）。
+/// 預設模式（E2E_USE_TESTCONTAINERS 未設定或 true）：
+///   自動啟動 PostgreSQL TestContainer 並以 dotnet run 啟動所有服務，測試結束後清除，
+///   確保 E2E 測試不會污染或依賴開發環境的真實資料庫。
 ///
-/// 自動模式（E2E_USE_TESTCONTAINERS=true）：
-///   自動啟動 PostgreSQL TestContainer 並以 dotnet run 啟動所有服務。
+/// 手動模式（E2E_USE_TESTCONTAINERS=false）：
+///   假設 dev 環境服務已啟動（task docker-up + 各 task *-dev 已執行），供本機快速迭代測試用。
 /// </summary>
 [Binding]
 public class PlaywrightBaseStep(ScenarioContext ctx)
@@ -195,7 +196,7 @@ public class PlaywrightBaseStep(ScenarioContext ctx)
     // ── 內部工具 ────────────────────────────────────────────────────────────
 
     private static bool UseTestContainers =>
-        string.Equals(Environment.GetEnvironmentVariable("E2E_USE_TESTCONTAINERS"), "true",
+        !string.Equals(Environment.GetEnvironmentVariable("E2E_USE_TESTCONTAINERS"), "false",
             StringComparison.OrdinalIgnoreCase);
 
     private static string FindRepoRoot()
