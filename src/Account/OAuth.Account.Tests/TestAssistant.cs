@@ -145,4 +145,56 @@ public static class TestAssistant
         var token = tokenHandler.CreateToken(tokenDescriptor);
         return tokenHandler.WriteToken(token);
     }
+
+    public static string GenerateTotpCode(string base32Key)
+    {
+        var keyBytes = Base32Decode(base32Key);
+        var unixTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        var timestep = unixTimestamp / 30;
+
+        var timestepBytes = BitConverter.GetBytes(timestep);
+        if (BitConverter.IsLittleEndian)
+        {
+            Array.Reverse(timestepBytes);
+        }
+
+        using var hmac = new HMACSHA1(keyBytes);
+        var hash = hmac.ComputeHash(timestepBytes);
+
+        var offset = hash[^1] & 0x0F;
+        var binary = ((hash[offset] & 0x7f) << 24)
+                   | ((hash[offset + 1] & 0xff) << 16)
+                   | ((hash[offset + 2] & 0xff) << 8)
+                   | (hash[offset + 3] & 0xff);
+
+        var otp = binary % 1000000;
+        return otp.ToString("D6");
+    }
+
+    private static byte[] Base32Decode(string input)
+    {
+        const string Base32Chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+        input = input.Trim().TrimEnd('=').ToUpperInvariant();
+        var output = new List<byte>();
+
+        var buffer = 0;
+        var bitsLeft = 0;
+
+        foreach (var c in input)
+        {
+            var val = Base32Chars.IndexOf(c);
+            if (val < 0) continue;
+
+            buffer = (buffer << 5) | val;
+            bitsLeft += 5;
+
+            if (bitsLeft >= 8)
+            {
+                output.Add((byte)((buffer >> (bitsLeft - 8)) & 0xFF));
+                bitsLeft -= 8;
+            }
+        }
+
+        return output.ToArray();
+    }
 }

@@ -33,12 +33,6 @@ public class AccountTestFactory : WebApplicationFactory<Program>
                 options.UseOpenIddict();
             });
 
-            services.AddDbContext<ApplicationDbContext>(options =>
-            {
-                options.UseNpgsql(connectionString);
-                options.UseOpenIddict();
-            });
-
             services.PostConfigure<Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerOptions>(
                 Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme,
                 options =>

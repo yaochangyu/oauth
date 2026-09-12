@@ -484,7 +484,10 @@ public class BaseStep : Steps
         var user = await userManager.FindByIdAsync(userId)
             ?? throw new InvalidOperationException($"找不到使用者 {userId}");
 
-        var code = await userManager.GenerateTwoFactorTokenAsync(user, userManager.Options.Tokens.AuthenticatorTokenProvider);
+        var key = await userManager.GetAuthenticatorKeyAsync(user);
+        key.Should().NotBeNullOrWhiteSpace($"User {userId} should have an authenticator key generated");
+
+        var code = TestAssistant.GenerateTotpCode(key!);
 
         var bodyObj = new JsonObject
         {
