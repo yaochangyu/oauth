@@ -39,34 +39,59 @@ Feature: 安全性與權限控制
   # =========================================================================
 
   Scenario: 偽造 X-Developer-UserId Header 無法竄改 App 擁有者身分
-    # Alice 登入並取得有效 JWT，但在 Header 惡意帶入 X-Developer-UserId: dev_user_bob
-    Given 調用端已使用開發者身分 "dev_user_alice" 取得有效 JWT Token
+    # Alice 登入並取得有效 JWT，但在 Header 惡意帶入 X-Developer-UserId: dev_user_header_bob
+    Given 調用端已使用開發者身分 "dev_user_header_alice" 取得有效 JWT Token
     And 調用端已準備 Header 參數
-      | X-Developer-UserId |
-      | dev_user_bob       |
+      | X-Developer-UserId  |
+      | dev_user_header_bob |
     And 調用端已準備 Body 參數(Json)
       """
       {
-        "displayName": "Alice Private App",
+        "displayName": "Alice Private Header App",
         "appType": "Web",
         "redirectUris": ["https://alice.com/cb"]
       }
       """
     When 調用端發送 "POST" 請求至 "/api/v1/developer/apps"
     Then 調用端應收到 HTTP 狀態碼為 "201"
-    And 從回應中儲存變數 "AliceCreatedAppId" 為 JSON 欄位 "$.id"
+    And 從回應中儲存變數 "AliceHeaderCreatedAppId" 為 JSON 欄位 "$.id"
 
-    # Bob 登入並查詢自己的 App 清單，不應看到 Alice 建立的 App（因為 App 擁有者為 Alice，而非被偽造的 Bob）
-    Given 調用端已使用開發者身分 "dev_user_bob" 取得有效 JWT Token
-    When 調用端發送 "GET" 請求至 "/api/v1/developer/apps"
-    Then 調用端應收到 HTTP 狀態碼為 "200"
-    # Alice 登入並查詢自己的 App 清單，應該看到自己建立的 App
-    Given 調用端已使用開發者身分 "dev_user_alice" 取得有效 JWT Token
-    When 調用端發送 "GET" 請求至 "/api/v1/developer/apps"
+    # Bob 登入並嘗試存取 Alice 建立的 App，應收到 403（因為 App 擁有者為 Alice，而非被偽造的 Bob）
+    Given 調用端已使用開發者身分 "dev_user_header_bob" 取得有效 JWT Token
+    When 調用端發送 "GET" 請求至 "/api/v1/developer/apps/{{AliceHeaderCreatedAppId}}"
+    Then 調用端應收到 HTTP 狀態碼為 "403"
+
+    # Alice 登入並查詢自己建立的 App，應該成功取得且 displayName 相符
+    Given 調用端已使用開發者身分 "dev_user_header_alice" 取得有效 JWT Token
+    When 調用端發送 "GET" 請求至 "/api/v1/developer/apps/{{AliceHeaderCreatedAppId}}"
     Then 調用端應收到 HTTP 狀態碼為 "200"
     And 回應內容驗證
-      | 欄位路徑          | 驗證方式   | 預期值            |
-      | $[0].displayName  | 字串等於   | Alice Private App |
+      | 欄位路徑      | 驗證方式   | 預期值                   |
+      | $.displayName | 字串等於   | Alice Private Header App |
+
+  # =========================================================================
+  # 【新 Blocker 驗證】偽造對稱金鑰或非 AuthServer 簽發之 Token 必須被拒絕 (401)
+  # =========================================================================
+
+  Scenario: 使用自製對稱金鑰簽發的偽造 Token 存取受保護端點應回傳 401
+    Given 調用端使用自製對稱金鑰簽發偽造 JWT Token 冒充 "dev_user_attacker"
+    When 調用端發送 "GET" 請求至 "/api/v1/developer/apps"
+    Then 調用端應收到 HTTP 狀態碼為 "401"
+
+  Scenario: 使用非 AuthServer 的未知 RSA 金鑰簽發之偽造 Token 存取受保護端點應回傳 401
+    Given 調用端使用未知 RSA 私鑰簽發偽造 JWT Token 冒充 "dev_user_attacker"
+    When 調用端發送 "GET" 請求至 "/api/v1/developer/apps"
+    Then 調用端應收到 HTTP 狀態碼為 "401"
+
+  Scenario: 使用偽造 Issuer 的 JWT Token 存取受保護端點應回傳 401
+    Given 調用端使用偽造 Issuer 的 JWT Token 冒充 "dev_user_attacker"
+    When 調用端發送 "GET" 請求至 "/api/v1/developer/apps"
+    Then 調用端應收到 HTTP 狀態碼為 "401"
+
+  Scenario: 使用偽造 Audience 的 JWT Token 存取受保護端點應回傳 401
+    Given 調用端使用偽造 Audience 的 JWT Token 冒充 "dev_user_attacker"
+    When 調用端發送 "GET" 請求至 "/api/v1/developer/apps"
+    Then 調用端應收到 HTTP 狀態碼為 "401"
 
   # =========================================================================
   # 【Blocker 3 驗證】跨使用者操作 App 資源應回傳 403 Forbidden 防止 IDOR 越權存取

@@ -96,6 +96,62 @@ public class BaseStep : Steps
         this.ScenarioContext["Headers"] = headers;
     }
 
+    [Given(@"調用端使用自製對稱金鑰簽發偽造 JWT Token 冒充 ""(.*)""")]
+    [When(@"調用端使用自製對稱金鑰簽發偽造 JWT Token 冒充 ""(.*)""")]
+    public void Given調用端使用自製對稱金鑰簽發偽造JWTToken(string userId)
+    {
+        var token = TestAssistant.GenerateForgedSymmetricToken(userId);
+        var headers = this.ScenarioContext.ContainsKey("Headers")
+            ? (Dictionary<string, string>)this.ScenarioContext["Headers"]
+            : new Dictionary<string, string>();
+
+        headers["Authorization"] = $"Bearer {token}";
+        this.ScenarioContext["Headers"] = headers;
+        this.ScenarioContext["CurrentDeveloperUserId"] = userId;
+    }
+
+    [Given(@"調用端使用未知 RSA 私鑰簽發偽造 JWT Token 冒充 ""(.*)""")]
+    [When(@"調用端使用未知 RSA 私鑰簽發偽造 JWT Token 冒充 ""(.*)""")]
+    public void Given調用端使用未知RSA私鑰簽發偽造JWTToken(string userId)
+    {
+        var token = TestAssistant.GenerateForgedRsaToken(userId);
+        var headers = this.ScenarioContext.ContainsKey("Headers")
+            ? (Dictionary<string, string>)this.ScenarioContext["Headers"]
+            : new Dictionary<string, string>();
+
+        headers["Authorization"] = $"Bearer {token}";
+        this.ScenarioContext["Headers"] = headers;
+        this.ScenarioContext["CurrentDeveloperUserId"] = userId;
+    }
+
+    [Given(@"調用端使用偽造 Issuer 的 JWT Token 冒充 ""(.*)""")]
+    [When(@"調用端使用偽造 Issuer 的 JWT Token 冒充 ""(.*)""")]
+    public void Given調用端使用偽造Issuer的JWTToken(string userId)
+    {
+        var token = TestAssistant.GenerateForgedIssuerToken(userId);
+        var headers = this.ScenarioContext.ContainsKey("Headers")
+            ? (Dictionary<string, string>)this.ScenarioContext["Headers"]
+            : new Dictionary<string, string>();
+
+        headers["Authorization"] = $"Bearer {token}";
+        this.ScenarioContext["Headers"] = headers;
+        this.ScenarioContext["CurrentDeveloperUserId"] = userId;
+    }
+
+    [Given(@"調用端使用偽造 Audience 的 JWT Token 冒充 ""(.*)""")]
+    [When(@"調用端使用偽造 Audience 的 JWT Token 冒充 ""(.*)""")]
+    public void Given調用端使用偽造Audience的JWTToken(string userId)
+    {
+        var token = TestAssistant.GenerateForgedAudienceToken(userId);
+        var headers = this.ScenarioContext.ContainsKey("Headers")
+            ? (Dictionary<string, string>)this.ScenarioContext["Headers"]
+            : new Dictionary<string, string>();
+
+        headers["Authorization"] = $"Bearer {token}";
+        this.ScenarioContext["Headers"] = headers;
+        this.ScenarioContext["CurrentDeveloperUserId"] = userId;
+    }
+
     [Given(@"調用端已準備 Header 參數")]
     public void Given調用端已準備Header參數(Table table)
     {
