@@ -25,6 +25,7 @@ public class PlaywrightBaseStep(ScenarioContext ctx)
     private static readonly List<IContainer> _containers = [];
     private static readonly List<Process>    _services   = [];
     private static bool _started;
+    private static string? _testContainerConnStr;
 
     // ── 全域服務生命週期 ────────────────────────────────────────────────────
 
@@ -43,6 +44,7 @@ public class PlaywrightBaseStep(ScenarioContext ctx)
         await pg.StartAsync();
         _containers.Add(pg);
         var connStr = pg.GetConnectionString();
+        _testContainerConnStr = connStr;
 
         await RunMigrationsAsync(repoRoot, connStr);
 
@@ -103,7 +105,30 @@ public class PlaywrightBaseStep(ScenarioContext ctx)
     // ── Scenario 瀏覽器生命週期 ─────────────────────────────────────────────
 
     [BeforeScenario]
-    public Task BeforeScenario() => Task.CompletedTask;
+    public async Task BeforeScenario()
+    {
+        await ResetOpenIddictAuthorizationsAsync();
+    }
+
+    private static async Task ResetOpenIddictAuthorizationsAsync()
+    {
+        var connStr = _testContainerConnStr
+            ?? Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
+            ?? "Host=localhost;Port=5432;Database=oauth_db;Username=oauth;Password=oauth_pass";
+
+        try
+        {
+            await using var conn = new Npgsql.NpgsqlConnection(connStr);
+            await conn.OpenAsync();
+            await using var cmd = conn.CreateCommand();
+            cmd.CommandText = @"DELETE FROM ""OpenIddictTokens""; DELETE FROM ""OpenIddictAuthorizations"";";
+            await cmd.ExecuteNonQueryAsync();
+        }
+        catch
+        {
+            // 若資料庫連線暫不可用或表尚未建立則略過
+        }
+    }
 
     [AfterScenario]
     public async Task AfterScenario()

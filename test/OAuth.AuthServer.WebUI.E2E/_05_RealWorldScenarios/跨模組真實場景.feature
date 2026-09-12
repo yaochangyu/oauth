@@ -24,6 +24,7 @@ Feature: 跨模組真實場景 E2E 測試
         When 用戶點擊同意
         Then 不應顯示同意頁面
         And 應完成授權跳轉至 MVC Client
+        And 驗證 UserInfo 包含同意之 Claims 且不包含未同意之 Claims
 
     # 場景 4：使用者拒絕同意（Deny，導回第三方並帶 access_denied，不核發 Token）
     Scenario: 場景四_使用者拒絕同意導回第三方並顯示授權失敗
@@ -34,10 +35,17 @@ Feature: 跨模組真實場景 E2E 測試
         When 用戶點擊拒絕
         Then 應顯示授權錯誤訊息 "access_denied"
 
-    # 場景 7：Implicit 授權流程略過同意頁面
-    Scenario: 場景七_Implicit應用程式發起授權直接跳過同意頁面
+    # 場景 7：Permanent Authorization 略過同意（兩階段登入驗證）
+    Scenario: 場景七_PermanentAuthorization兩階段登入直接授權略過同意頁面
         Given 使用者尚未登入
-        When 使用者透過 "mvc-implicit" 發起授權
+        # 第一階段：首次發起授權，需顯示同意頁面並完成授權
+        When 使用者透過 "mvc-client" 發起授權
+        And 使用者輸入帳號 "admin" 密碼 "Admin@123456" 登入
+        Then 應顯示同意頁面
+        When 用戶點擊同意
+        Then 應完成授權跳轉至 MVC Client
+        # 第二階段：結束 session 後再次登入同一 App，驗證 Permanent Authorization 生效略過同意頁面
+        When 使用者結束工作階段並再次透過 "mvc-client" 發起授權
         And 使用者輸入帳號 "admin" 密碼 "Admin@123456" 登入
         Then 不應顯示同意頁面
         And 應完成授權跳轉至 MVC Client
