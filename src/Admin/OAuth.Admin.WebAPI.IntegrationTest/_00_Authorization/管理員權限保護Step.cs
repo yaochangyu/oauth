@@ -26,6 +26,12 @@ public class 管理員權限保護Step : Steps
         var httpMethod = new HttpMethod(method);
         using var request = new HttpRequestMessage(httpMethod, url);
 
+        if (this.ScenarioContext.ContainsKey("Body"))
+        {
+            var body = (string)this.ScenarioContext["Body"];
+            request.Content = new StringContent(body, System.Text.Encoding.UTF8, System.Net.Mime.MediaTypeNames.Application.Json);
+        }
+
         // 未登入請求：不附加任何身分識別 Header
         var response = await client.SendAsync(request);
         var responseBody = await response.Content.ReadAsStringAsync();
@@ -53,6 +59,12 @@ public class 管理員權限保護Step : Steps
             var headers = (Dictionary<string, string>)this.ScenarioContext["Headers"];
             foreach (var h in headers)
                 request.Headers.TryAddWithoutValidation(h.Key, h.Value);
+        }
+
+        if (this.ScenarioContext.ContainsKey("Body"))
+        {
+            var body = (string)this.ScenarioContext["Body"];
+            request.Content = new StringContent(body, System.Text.Encoding.UTF8, System.Net.Mime.MediaTypeNames.Application.Json);
         }
 
         var response = await client.SendAsync(request);

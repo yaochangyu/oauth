@@ -75,3 +75,56 @@ Scenario: 09. 非法狀態轉換 - 嘗試恢復非 Suspended 狀態應用應回�
   Given 資料庫已存在第三方應用 "inreview-app-1" 其開發者為 "dev9@example.com" 狀態為 "InReview"
   When 管理員發送 "POST" 請求至 "/api/v1/admin/apps/inreview-app-1/restore"
   Then 預期得到 HttpStatusCode 為 "400"
+
+Scenario: 10. 管理員建立第三方應用
+  Given 管理員已準備 Body 參數(Json)
+  """
+  {
+    "clientId": "created-app-01",
+    "displayName": "Created App 01",
+    "clientType": "confidential",
+    "clientSecret": "Secret123!",
+    "consentType": "explicit",
+    "developer": "dev@test.com",
+    "redirectUris": ["https://created.example.com/callback"],
+    "postLogoutRedirectUris": ["https://created.example.com/logout"],
+    "permissions": ["ept:authorization", "ept:token", "gt:authorization_code", "gt:refresh_token", "scp:api"]
+  }
+  """
+  When 管理員發送 "POST" 請求至 "/api/v1/admin/apps"
+  Then 預期得到 HttpStatusCode 為 "201"
+  When 管理員發送 "GET" 請求至 "/api/v1/admin/apps/created-app-01"
+  Then 預期得到 HttpStatusCode 為 "200"
+  And 預期回傳內容中路徑 "$.clientId" 的"字串等於" "created-app-01"
+  And 預期回傳內容中路徑 "$.displayName" 的"字串等於" "Created App 01"
+  And 預期回傳內容中路徑 "$.clientType" 的"字串等於" "confidential"
+
+Scenario: 11. 管理員編輯第三方應用設定
+  Given 資料庫已存在第三方應用 "app-to-edit" 其開發者為 "dev-edit@example.com" 狀態為 "Sandbox"
+  Given 管理員已準備 Body 參數(Json)
+  """
+  {
+    "displayName": "Updated Display Name",
+    "clientType": "public",
+    "consentType": "implicit",
+    "developer": "dev-updated@example.com",
+    "redirectUris": ["https://updated.example.com/callback"],
+    "postLogoutRedirectUris": ["https://updated.example.com/logout"],
+    "permissions": ["ept:authorization", "gt:authorization_code"]
+  }
+  """
+  When 管理員發送 "PUT" 請求至 "/api/v1/admin/apps/app-to-edit"
+  Then 預期得到 HttpStatusCode 為 "200"
+  When 管理員發送 "GET" 請求至 "/api/v1/admin/apps/app-to-edit"
+  Then 預期得到 HttpStatusCode 為 "200"
+  And 預期回傳內容中路徑 "$.displayName" 的"字串等於" "Updated Display Name"
+  And 預期回傳內容中路徑 "$.clientType" 的"字串等於" "public"
+  And 預期回傳內容中路徑 "$.consentType" 的"字串等於" "implicit"
+
+Scenario: 12. 管理員刪除第三方應用
+  Given 資料庫已存在第三方應用 "app-to-delete" 其開發者為 "dev-del@example.com" 狀態為 "Sandbox"
+  When 管理員發送 "DELETE" 請求至 "/api/v1/admin/apps/app-to-delete"
+  Then 預期得到 HttpStatusCode 為 "200"
+  When 管理員發送 "GET" 請求至 "/api/v1/admin/apps/app-to-delete"
+  Then 預期得到 HttpStatusCode 為 "404"
+
