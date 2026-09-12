@@ -36,7 +36,7 @@ public class TokenController(
             if (!await signInManager.CanSignInAsync(user))
                 return Forbid(OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
 
-            var authorizationId = result.Principal.GetAuthorizationId();
+            var authorizationId = result.Principal?.GetAuthorizationId();
             if (!string.IsNullOrEmpty(authorizationId))
             {
                 var auth = await authorizationManager.FindByIdAsync(authorizationId);

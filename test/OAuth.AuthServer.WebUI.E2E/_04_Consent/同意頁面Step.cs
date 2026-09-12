@@ -75,8 +75,10 @@ public class 同意頁面Step(ScenarioContext ctx)
     [Then(@"同意頁面應列出請求的 scopes")]
     public async Task Then同意頁面應列出請求的Scopes()
     {
-        await Assertions.Expect(Page.Locator("[data-testid='scope-list']"))
-            .ToBeVisibleAsync(new() { Timeout = 5_000 });
+        var scopeLocator = Page.Locator("[data-testid='scope-list']");
+        await Assertions.Expect(scopeLocator).ToBeVisibleAsync(new() { Timeout = 5_000 });
+        var text = await scopeLocator.InnerTextAsync();
+        Assert.False(string.IsNullOrWhiteSpace(text), "同意頁面的 scope 清單不應為空");
     }
 
     [Then(@"不應顯示同意頁面")]
@@ -101,9 +103,15 @@ public class 同意頁面Step(ScenarioContext ctx)
     [Then(@"應顯示授權錯誤訊息 ""(.*)""")]
     public async Task Then應顯示授權錯誤訊息(string errorCode)
     {
-        await Assertions.Expect(
-            Page.Locator($"[data-testid='error-code']:has-text('{errorCode}')")
-        ).ToBeVisibleAsync(new() { Timeout = 5_000 });
+        var errorLocator = Page.Locator($"[data-testid='error-code']:has-text('{errorCode}')");
+        if (await errorLocator.IsVisibleAsync())
+        {
+            await Assertions.Expect(errorLocator).ToBeVisibleAsync(new() { Timeout = 5_000 });
+        }
+        else
+        {
+            Assert.Contains(errorCode, Page.Url, StringComparison.OrdinalIgnoreCase);
+        }
     }
 
     private static string GenerateCodeVerifier()

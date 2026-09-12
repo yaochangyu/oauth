@@ -47,6 +47,21 @@ public sealed class MvcClientFixture : IAsyncLifetime
         await Page.FillAsync("input[type='password']", AdminPassword);
         await Page.ClickAsync("button[type='submit']");
 
+        // 若出現同意頁面，點擊同意
+        try
+        {
+            await Page.WaitForURLAsync(url => url.Contains("/consent") || url.Contains("/Profile"),
+                new PageWaitForURLOptions { Timeout = 10_000 });
+            if (Page.Url.Contains("/consent", StringComparison.OrdinalIgnoreCase))
+            {
+                await Page.ClickAsync("button[value='accept']");
+            }
+        }
+        catch (TimeoutException)
+        {
+            // 頁面未在超時內轉跳至 consent 或 Profile，由後續 WaitForSelector 進行逾時驗證
+        }
+
         // 等待回到 MVC Client Profile 頁面
         await Page.WaitForSelectorAsync("h1:has-text('個人資料')", new PageWaitForSelectorOptions { Timeout = 30_000 });
     }

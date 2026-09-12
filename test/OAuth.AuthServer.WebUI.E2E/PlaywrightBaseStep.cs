@@ -56,7 +56,7 @@ public class PlaywrightBaseStep(ScenarioContext ctx)
                 ["RateLimiting__Login__PermitLimit"] = "1000",
                 ["RateLimiting__Login__WindowSeconds"] = "60",
             }));
-        _services.Add(StartService(repoRoot, "src/Admin/OAuth.AuthServer.Admin.WebUI",
+        _services.Add(StartService(repoRoot, "src/Admin/OAuth.Admin.WebAPI",
             "https://localhost:7002;http://localhost:5279", connStr));
         _services.Add(StartService(repoRoot, "src/Clients/OAuth.Client.Mvc",
             "https://localhost:5101;http://localhost:5256", connStr));
@@ -65,13 +65,22 @@ public class PlaywrightBaseStep(ScenarioContext ctx)
         _services.Add(StartService(repoRoot, "src/Clients/OAuth.Client.SpaHost",
             "https://localhost:5200", connStr));
 
-        await WaitForReadyAsync(TestSettings.AuthServerBase, timeoutSeconds: 120);
-        await WaitForReadyAsync(TestSettings.AdminUIBase,    timeoutSeconds:  60);
-        await WaitForReadyAsync(TestSettings.MvcClientBase,  timeoutSeconds:  30);
-        await WaitForReadyAsync(TestSettings.WebApiBase,     timeoutSeconds:  30);
-        await WaitForReadyAsync(TestSettings.SpaHostBase,    timeoutSeconds:  30);
+        try
+        {
+            await WaitForReadyAsync(TestSettings.AuthServerBase, timeoutSeconds: 120);
+            await WaitForReadyAsync(TestSettings.AdminUIBase,    timeoutSeconds:  60);
+            await WaitForReadyAsync(TestSettings.MvcClientBase,  timeoutSeconds:  30);
+            await WaitForReadyAsync(TestSettings.WebApiBase,     timeoutSeconds:  30);
+            await WaitForReadyAsync(TestSettings.SpaHostBase,    timeoutSeconds:  30);
 
-        _started = true;
+            _started = true;
+        }
+        catch
+        {
+            _started = true;
+            await AfterTestRun();
+            throw;
+        }
     }
 
     [AfterTestRun]
