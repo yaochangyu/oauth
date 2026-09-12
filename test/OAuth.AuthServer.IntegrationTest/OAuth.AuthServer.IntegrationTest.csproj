@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -26,6 +26,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\AuthServer\OAuth.AuthServer.WebAPI\OAuth.AuthServer.WebAPI.csproj" />
+    <ProjectReference Include="..\..\src\Developer\OAuth.Developer.WebAPI\OAuth.Developer.WebAPI.csproj" />
+    <ProjectReference Include="..\..\src\Account\OAuth.Account.WebAPI\OAuth.Account.WebAPI.csproj" />
   </ItemGroup>
 
 </Project>

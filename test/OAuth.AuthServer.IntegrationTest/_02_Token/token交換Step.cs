@@ -16,11 +16,14 @@ public class token交換Step : Steps
     [When(@"調用端發送 Form ""(.*)"" 請求至 ""(.*)""")]
     public async Task When調用端發送Form請求至(string method, string url)
     {
+        url = ReplacePlaceholders(url);
+
         var client = (HttpClient)this.ScenarioContext["HttpClient"];
         var httpMethod = new HttpMethod(method);
         using var request = new HttpRequestMessage(httpMethod, url);
 
         var formBody = (string)this.ScenarioContext["FormBody"];
+        formBody = ReplacePlaceholders(formBody);
         request.Content = new StringContent(formBody, Encoding.UTF8, "application/x-www-form-urlencoded");
 
         var response = await client.SendAsync(request);
@@ -39,6 +42,27 @@ public class token交換Step : Steps
             }
             catch { /* 非 JSON */ }
         }
+    }
+
+    private string ReplacePlaceholders(string input)
+    {
+        if (string.IsNullOrEmpty(input))
+            return input;
+
+        foreach (var key in this.ScenarioContext.Keys)
+        {
+            var val = this.ScenarioContext[key]?.ToString();
+            if (val != null)
+            {
+                input = input.Replace($"{{{{{key}}}}}", val);
+                if (key.StartsWith("Saved") || key.StartsWith("Created"))
+                {
+                    var shortKey = key.Replace("Saved", "").Replace("Created", "");
+                    input = input.Replace($"{{{{{shortKey}}}}}", val);
+                }
+            }
+        }
+        return input;
     }
 
     [Then(@"回傳的 Access Token 格式為 JWT")]
