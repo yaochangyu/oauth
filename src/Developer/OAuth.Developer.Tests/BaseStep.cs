@@ -1,6 +1,7 @@
 using DotNet.Testcontainers.Containers;
 using FluentAssertions;
 using Json.Path;
+using Microsoft.EntityFrameworkCore;
 using Reqnroll;
 using System.Net.Mime;
 using System.Text;
@@ -225,6 +226,22 @@ public class BaseStep : Steps
             val = node?.ToString();
         }
         this.ScenarioContext[variableName] = val;
+    }
+
+    [Then(@"驗證資料庫中存在開發者 ""(.*)"" 狀態紀錄")]
+    public async Task Then驗證資料庫中存在開發者狀態紀錄(string userId)
+    {
+        var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
+            ?? throw new InvalidOperationException("測試用 PostgreSQL Connection String 未設定");
+
+        var options = new Microsoft.EntityFrameworkCore.DbContextOptionsBuilder<OAuth.Developer.WebAPI.Data.DeveloperDbContext>()
+            .UseNpgsql(connectionString)
+            .Options;
+
+        await using var devDb = new OAuth.Developer.WebAPI.Data.DeveloperDbContext(options);
+        var profile = await devDb.DeveloperProfiles.FindAsync(userId);
+        profile.Should().NotBeNull($"資料庫 DeveloperProfiles 表中應存在 UserId = {userId} 的持久化紀錄");
+        profile!.IsDeveloperEnabled.Should().BeTrue();
     }
 
     private string ReplacePlaceholders(string input)

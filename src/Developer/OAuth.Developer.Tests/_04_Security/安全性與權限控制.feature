@@ -163,3 +163,34 @@ Feature: 安全性與權限控制
     # Bob 嘗試查詢 Alice 的審核狀態 -> 403
     When 調用端發送 "GET" 請求至 "/api/v1/developer/apps/{{AliceReviewAppId}}/review-status"
     Then 調用端應收到 HTTP 狀態碼為 "403"
+
+  # =========================================================================
+  # 【Major 1 驗證】開發者帳號狀態落地 PostgreSQL 資料庫與持久化
+  # =========================================================================
+
+  Scenario: 開發者啟用狀態持久化至資料庫
+    Given 調用端已使用開發者身分 "dev_user_persisted" 取得有效 JWT Token
+    And 調用端已準備 Body 參數(Json)
+      """
+      {
+        "organizationName": "Persistent Cloud Corp",
+        "contactEmail": "admin@cloudcorp.com",
+        "acceptAgreement": true
+      }
+      """
+    When 調用端發送 "POST" 請求至 "/api/v1/developer/account/enable"
+    Then 調用端應收到 HTTP 狀態碼為 "200"
+    And 回應內容驗證
+      | 欄位路徑              | 驗證方式   | 預期值                |
+      | $.isDeveloperEnabled  | 布林值等於 | true                  |
+      | $.organizationName    | 字串等於   | Persistent Cloud Corp |
+      | $.contactEmail        | 字串等於   | admin@cloudcorp.com   |
+    When 調用端發送 "GET" 請求至 "/api/v1/developer/account/status"
+    Then 調用端應收到 HTTP 狀態碼為 "200"
+    And 回應內容驗證
+      | 欄位路徑              | 驗證方式   | 預期值                |
+      | $.isDeveloperEnabled  | 布林值等於 | true                  |
+      | $.organizationName    | 字串等於   | Persistent Cloud Corp |
+      | $.contactEmail        | 字串等於   | admin@cloudcorp.com   |
+    And 驗證資料庫中存在開發者 "dev_user_persisted" 狀態紀錄
+
