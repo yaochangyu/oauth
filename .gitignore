@@ -32,6 +32,7 @@ Thumbs.db
 
 *.feature.cs
 ## Tool session files
+.omc/
 .omo/
 
 ## IDE
