@@ -36,6 +36,7 @@ public class CreateAppRequest
     public List<string> RedirectUris { get; set; } = [];
     public List<string> PostLogoutRedirectUris { get; set; } = [];
     public List<string> Permissions { get; set; } = [];
+    public List<string> Requirements { get; set; } = [];
 }
 
 public class UpdateAppRequest
@@ -48,4 +49,5 @@ public class UpdateAppRequest
     public List<string> RedirectUris { get; set; } = [];
     public List<string> PostLogoutRedirectUris { get; set; } = [];
     public List<string> Permissions { get; set; } = [];
+    public List<string> Requirements { get; set; } = [];
 }

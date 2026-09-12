@@ -230,29 +230,99 @@ public class AppReviewController(
             ConsentType = request.ConsentType,
         };
 
-        if (!string.IsNullOrEmpty(request.ClientSecret))
+        if (string.Equals(request.ClientType, "public", StringComparison.OrdinalIgnoreCase))
+        {
+            descriptor.ClientSecret = null;
+        }
+        else if (!string.IsNullOrEmpty(request.ClientSecret))
+        {
             descriptor.ClientSecret = request.ClientSecret;
+        }
 
+        try
+        {
+            await appManager.CreateAsync(descriptor);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+
+        await auditLogService.RecordAsync(new AuditLogEntry
+        {
+            EventType = "AppCreated",
+            Actor = User.Identity?.Name ?? "admin",
+            Target = request.ClientId,
+            Details = $"建立第三方應用程式 {request.ClientId} ({request.DisplayName})",
+            IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1",
+        });
+
+        return CreatedAtAction(nameof(GetApp), new { id = request.ClientId }, new { message = "Application created successfully" });
+    }
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateApp(string id, [FromBody] UpdateAppRequest request)
+    {
+        var app = await FindAppByIdOrClientIdAsync(id);
+        if (app is null) return NotFound(new { message = "Application not found" });
+
+        var descriptor = new OpenIddictApplicationDescriptor();
+        await appManager.PopulateAsync(descriptor, app);
+
+        descriptor.DisplayName = request.DisplayName;
+        descriptor.ClientType = request.ClientType;
+        descriptor.ConsentType = request.ConsentType;
+
+        if (string.Equals(request.ClientType, "public", StringComparison.OrdinalIgnoreCase))
+        {
+            descriptor.ClientSecret = null;
+        }
+        else if (!string.IsNullOrEmpty(request.ClientSecret))
+        {
+            descriptor.ClientSecret = request.ClientSecret;
+        }
+
+        descriptor.RedirectUris.Clear();
         foreach (var uri in request.RedirectUris)
             if (Uri.TryCreate(uri, UriKind.Absolute, out var parsed))
                 descriptor.RedirectUris.Add(parsed);
 
+        descriptor.PostLogoutRedirectUris.Clear();
         foreach (var uri in request.PostLogoutRedirectUris)
             if (Uri.TryCreate(uri, UriKind.Absolute, out var parsed))
                 descriptor.PostLogoutRedirectUris.Add(parsed);
 
+        descriptor.Permissions.Clear();
         foreach (var perm in request.Permissions)
             descriptor.Permissions.Add(perm);
 
-        descriptor.Properties["status"] = JsonSerializer.SerializeToElement(request.Status ?? "Sandbox");
+        descriptor.Requirements.Clear();
+        foreach (var req in request.Requirements)
+            descriptor.Requirements.Add(req);
+
         if (!string.IsNullOrEmpty(request.Developer))
             descriptor.Properties["developer"] = JsonSerializer.SerializeToElement(request.Developer);
-        if (!string.IsNullOrEmpty(request.RequestReason))
-            descriptor.Properties["requestReason"] = JsonSerializer.SerializeToElement(request.RequestReason);
 
-        await appManager.CreateAsync(descriptor);
+        try
+        {
+            await appManager.UpdateAsync(app, descriptor);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
 
-        return CreatedAtAction(nameof(GetApp), new { id = request.ClientId }, new { message = "Application created successfully" });
+        var clientId = descriptor.ClientId ?? id;
+        await auditLogService.RecordAsync(new AuditLogEntry
+        {
+            EventType = "AppUpdated",
+            Actor = User.Identity?.Name ?? "admin",
+            Target = clientId,
+            Details = $"更新第三方應用程式設定 {clientId}",
+            IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1",
+        });
+
+        return Ok(new { message = "Application updated successfully" });
     }
 
     [HttpDelete("{id}")]
@@ -261,7 +331,21 @@ public class AppReviewController(
         var app = await FindAppByIdOrClientIdAsync(id);
         if (app is null) return NotFound(new { message = "Application not found" });
 
+        var descriptor = new OpenIddictApplicationDescriptor();
+        await appManager.PopulateAsync(descriptor, app);
+        var clientId = descriptor.ClientId ?? id;
+
         await appManager.DeleteAsync(app);
+
+        await auditLogService.RecordAsync(new AuditLogEntry
+        {
+            EventType = "AppDeleted",
+            Actor = User.Identity?.Name ?? "admin",
+            Target = clientId,
+            Details = $"刪除第三方應用程式 {clientId}",
+            IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1",
+        });
+
         return Ok(new { message = "Application deleted successfully" });
     }
 

@@ -110,7 +110,7 @@ Scenario: 11. 管理員編輯第三方應用設定
     "developer": "dev-updated@example.com",
     "redirectUris": ["https://updated.example.com/callback"],
     "postLogoutRedirectUris": ["https://updated.example.com/logout"],
-    "permissions": ["ept:authorization", "gt:authorization_code"]
+    "permissions": ["ept:authorization", "gt:authorization_code", "rst:code"]
   }
   """
   When 管理員發送 "PUT" 請求至 "/api/v1/admin/apps/app-to-edit"
