@@ -11,6 +11,7 @@ namespace OAuth.Admin.WebAPI.IntegrationTest._01_AppReview;
 [Binding]
 public class 第三方應用審核流Step : Steps
 {
+    [Given(@"資料庫已存在第三方應用 ""(.*)"" 其開發者為 ""(.*)"" 狀態為 ""(.*)""")]
     [Given(@"資料庫已存在待審核第三方應用 ""(.*)"" 其開發者為 ""(.*)"" 狀態為 ""(.*)""")]
     [Given(@"資料庫已存在已核准第三方應用 ""(.*)"" 其開發者為 ""(.*)"" 狀態為 ""(.*)""")]
     public async Task Given資料庫已存在第三方應用(string clientId, string developer, string status)
