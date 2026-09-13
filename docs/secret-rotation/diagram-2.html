@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>雙金鑰輪替循序圖</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;600&family=Noto+Serif+TC:wght@400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper: #f5f5f5;
+      --color-ink: #2d3142;
+      --color-muted: #4f5d75;
+      --color-accent: #eb6c36;
+      --font-sans: 'Geist', 'Noto Sans TC', system-ui, sans-serif;
+      --font-serif: 'Instrument Serif', 'Noto Serif TC', serif;
+      --font-mono: 'Geist Mono', ui-monospace, monospace;
+    }
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 2rem;
+    }
+    .frame { max-width: 1000px; width: 100%; }
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.5rem;
+    }
+    h1 {
+      font-family: var(--font-serif);
+      font-size: 2rem;
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      color: var(--color-ink);
+      margin-bottom: 1.5rem;
+    }
+    svg { width: 100%; height: auto; display: block; }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">DIAGRAM DESIGN · SEQUENCE</p>
+    <h1>雙金鑰輪替時序互動圖</h1>
+    <svg viewBox="0 0 900 620" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="secret-rotation-seq-title secret-rotation-seq-desc">
+      <title id="secret-rotation-seq-title">雙金鑰輪替時序互動圖</title>
+      <desc id="secret-rotation-seq-desc">展示開發者、Developer Portal 與 AuthServer 在金鑰輪替、雙金鑰並存期及廢止舊金鑰的訊息往來循序圖。</desc>
+      <defs>
+        <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/>
+        </marker>
+        <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#eb6c36"/>
+        </marker>
+        <marker id="arrow-error" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#c0392b"/>
+        </marker>
+      </defs>
+      <rect width="100%" height="100%" fill="#f5f5f5"/>
+
+      <!-- Lifelines -->
+      <!-- Actor 1: Developer / Client Apps -->
+      <rect x="70" y="30" width="160" height="40" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1.5"/>
+      <text x="150" y="55" fill="#2d3142" font-size="13" font-weight="600" text-anchor="middle" font-family="'Geist', 'Noto Sans TC', sans-serif">開發者 / 客戶端服務</text>
+      <line x1="150" y1="70" x2="150" y2="580" stroke="#4f5d75" stroke-width="1" stroke-dasharray="4 4"/>
+
+      <!-- Actor 2: Developer Portal -->
+      <rect x="370" y="30" width="160" height="40" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1.5"/>
+      <text x="450" y="55" fill="#2d3142" font-size="13" font-weight="600" text-anchor="middle" font-family="'Geist', 'Noto Sans TC', sans-serif">Developer Portal API</text>
+      <line x1="450" y1="70" x2="450" y2="580" stroke="#4f5d75" stroke-width="1" stroke-dasharray="4 4"/>
+
+      <!-- Actor 3: AuthServer -->
+      <rect x="670" y="30" width="160" height="40" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1.5"/>
+      <text x="750" y="55" fill="#2d3142" font-size="13" font-weight="600" text-anchor="middle" font-family="'Geist', 'Noto Sans TC', sans-serif">AuthServer / Token 端點</text>
+      <line x1="750" y1="70" x2="750" y2="580" stroke="#4f5d75" stroke-width="1" stroke-dasharray="4 4"/>
+
+      <!-- Step 1: Request Secret Rotation -->
+      <path d="M 150 110 L 440 110" stroke="#4f5d75" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+      <text x="295" y="102" fill="#2d3142" font-size="11" font-weight="600" text-anchor="middle" font-family="'Geist', 'Noto Sans TC', sans-serif">1. POST /apps/{id}/rotate-secret</text>
+
+      <!-- Self-call: Generate Key -->
+      <path d="M 450 125 C 490 125, 490 150, 450 150" stroke="#4f5d75" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
+      <text x="500" y="142" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace">產生活躍新金鑰 &amp; 設定舊金鑰 7 天過期</text>
+
+      <path d="M 450 170 L 160 170" stroke="#4f5d75" stroke-width="1.2" stroke-dasharray="4 2" fill="none" marker-end="url(#arrow)"/>
+      <text x="305" y="163" fill="#4f5d75" font-size="10" text-anchor="middle" font-family="'Geist Mono', monospace">200 OK: { newSecret, retiringSecretExpiresAt }</text>
+
+      <!-- Grace Period Box (Focal) -->
+      <rect x="60" y="195" width="780" height="195" rx="8" fill="rgba(235,108,54,0.05)" stroke="#eb6c36" stroke-width="1.2" stroke-dasharray="6 3"/>
+      <text x="80" y="215" fill="#eb6c36" font-size="11" font-weight="600" font-family="'Geist', 'Noto Sans TC', sans-serif">【雙金鑰並存過渡期（7 天緩衝）· 零停機保證】</text>
+
+      <!-- Step 2a: Validate with newSecret -->
+      <path d="M 150 240 L 740 240" stroke="#eb6c36" stroke-width="1.5" fill="none" marker-end="url(#arrow-accent)"/>
+      <text x="445" y="233" fill="#2d3142" font-size="11" font-weight="600" text-anchor="middle" font-family="'Geist', 'Noto Sans TC', sans-serif">2a. 已更新節點攜帶 newSecret 請求 Token</text>
+
+      <path d="M 750 265 L 160 265" stroke="#eb6c36" stroke-width="1.2" stroke-dasharray="4 2" fill="none" marker-end="url(#arrow-accent)"/>
+      <text x="455" y="258" fill="#eb6c36" font-size="10" text-anchor="middle" font-family="'Geist Mono', monospace">200 OK (Token Issued)</text>
+
+      <!-- Step 2b: Validate with oldSecret -->
+      <path d="M 150 310 L 740 310" stroke="#4f5d75" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+      <text x="445" y="303" fill="#2d3142" font-size="11" font-weight="600" text-anchor="middle" font-family="'Geist', 'Noto Sans TC', sans-serif">2b. 尚未更新節點攜帶 oldSecret 請求 Token</text>
+
+      <path d="M 750 335 L 160 335" stroke="#4f5d75" stroke-width="1.2" stroke-dasharray="4 2" fill="none" marker-end="url(#arrow)"/>
+      <text x="455" y="328" fill="#4f5d75" font-size="10" text-anchor="middle" font-family="'Geist Mono', monospace">200 OK (Token Issued 緩衝期內合法)</text>
+
+      <!-- Step 3: Revoke Retiring Secret -->
+      <path d="M 150 420 L 440 420" stroke="#2d3142" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+      <text x="295" y="412" fill="#2d3142" font-size="11" font-weight="600" text-anchor="middle" font-family="'Geist', 'Noto Sans TC', sans-serif">3. POST /apps/{id}/revoke-retiring-secret</text>
+
+      <!-- Self-call: Delete Key -->
+      <path d="M 450 435 C 490 435, 490 460, 450 460" stroke="#2d3142" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
+      <text x="500" y="452" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace">完全刪除資料庫中 Retiring 金鑰</text>
+
+      <path d="M 450 475 L 160 475" stroke="#4f5d75" stroke-width="1.2" stroke-dasharray="4 2" fill="none" marker-end="url(#arrow)"/>
+      <text x="305" y="468" fill="#4f5d75" font-size="10" text-anchor="middle" font-family="'Geist Mono', monospace">200 OK (舊金鑰已被作廢)</text>
+
+      <!-- Step 4: Old key rejected -->
+      <path d="M 150 515 L 740 515" stroke="#c0392b" stroke-width="1.5" fill="none" marker-end="url(#arrow-error)"/>
+      <text x="445" y="508" fill="#c0392b" font-size="11" font-weight="600" text-anchor="middle" font-family="'Geist', 'Noto Sans TC', sans-serif">4. 殘留節點仍使用 oldSecret 請求 Token</text>
+
+      <path d="M 750 540 L 160 540" stroke="#c0392b" stroke-width="1.2" stroke-dasharray="4 2" fill="none" marker-end="url(#arrow-error)"/>
+      <text x="455" y="533" fill="#c0392b" font-size="10" text-anchor="middle" font-family="'Geist Mono', monospace">400 Bad Request (invalid_client)</text>
+
+    </svg>
+  </div>
+</body>
+</html>
