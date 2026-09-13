@@ -1,6 +1,6 @@
-# AdminUI 管理後台操作指南
+# AdminUI 管理介面維運操作指南
 
-本功能提供系統管理員與維運人員透過 Web 管理介面進行第三方應用程式審核、使用者帳號狀態維護（凍結/解除）、Scope 權限配置與安全審計。
+本功能提供系統管理員透過 Web 管理介面（Blazor Server / MudBlazor）進行後台儀表板檢視、使用者帳號與角色配置、OAuth 應用程式管理以及 Scopes 授權範圍維護。
 
 ## 流程架構圖
 
@@ -8,29 +8,83 @@
 
 ## 主要操作流程
 
-1. **以 Administrator 身分登入 AdminUI**
-   打開 AdminUI 後台網址（如 `https://admin.example.com`），輸入具備管理員權限之帳密登入，取得 Admin Session。
+以下為 AdminUI 管理介面的標準操作步驟與對應之畫面元素（基於 Playwright E2E 測試定義）：
 
-2. **進入「應用審核 (App Review)」頁籤進行審核**
-   - 點擊左側選單「應用程式審核」，檢視待審核（InReview）清單。
-   - 點選特定 App 查看申請人、Redirect URI 與要求的 Scope 權限。
-   - 點擊「核准 (Approve)」將狀態變更為 Approved，或點擊「駁回 (Reject)」填寫退回原因。
+1. **管理員登入與首頁儀表板 (Dashboard)**
+   - **導向路徑**: `/`
+   - **操作元素**:
+     - 帳號輸入框：`input[name='userName']`
+     - 密碼輸入框：`input[type='password']`
+     - 送出按鈕：`button[type='submit']`
+   - **驗證畫面**: 登入成功後首頁顯示 `h5:has-text('Dashboard')` 標題，並提供 `Users`、`Roles`、`Scopes`、`Applications` 導覽連結。
 
-3. **使用者狀態管理與凍結 (User Management)**
-   - 進入「使用者管理」列表，使用搜尋框過濾使用者 Email 或 Id。
-   - 針對違規帳號點擊「凍結帳號 (Lockout)」，該使用者將立即無法登入。
-   - 點擊「終止所有會話 (Revoke Sessions)」強制登出該使用者所有設備。
+2. **使用者帳號管理與編輯 (Users Management)**
+   - **導向路徑**: `/users`
+   - **操作元素**:
+     - 搜尋輸入框：`input[placeholder*='Search']`（支援 Enter 觸發搜尋）
+     - 編輯按鈕：表格每筆資料之操作按鈕 `table .mud-icon-button`
+   - **使用者編輯頁**:
+     - 導向 `/users/edit/{id}`
+     - 使用者名稱欄位：`input[aria-label='Username']`
+     - 角色核取方塊：`.mud-checkbox`（例如勾選 `admin` 角色）
 
-4. **查看授權審計日誌 (Audit Logs)**
-   進入「審計日誌」頁籤，可依時間區間查詢所有用戶的 Consent 授權與撤銷歷史記錄。
+3. **角色權限管理 (Roles Management & CRUD)**
+   - **導向路徑**: `/roles`
+   - **新增角色**:
+     - 新角色名稱輸入框：`input[aria-label='New Role Name']`
+     - 新增按鈕：`button:has-text('Add Role')`
+     - 成功後角色即時出現在列表表格中。
+   - **刪除角色**:
+     - 點擊目標角色列之刪除按鈕：`tr:has(td:has-text('{roleName}')) .mud-icon-button`
+     - 確認對話框：`.mud-message-box button:has-text('Delete')`
+     - 刪除後該角色自列表移除。
+
+4. **OAuth 應用程式管理 (Applications Management)**
+   - **導向路徑**: `/applications`
+   - **操作元素**:
+     - 頁面標題：`h5:has-text('OAuth Applications')`
+     - 搜尋輸入框：`input[placeholder*='Search']`
+     - 編輯按鈕：`tr:has(td:has-text('{clientId}')) .mud-icon-button`
+   - **應用程式編輯頁**:
+     - 導向 `/applications/edit/{id}`
+     - Client Id 欄位：`input[aria-label='Client Id']`（顯示如 `mvc-client`）
+
+5. **授權範圍管理 (Scopes Management)**
+   - **導向路徑**: `/scopes`
+   - **操作元素**:
+     - Scope 列表表格：顯示系統內建與自訂 Scopes（如 `api`）
+     - 編輯按鈕：`tr:has(td:has-text('{scopeName}')) .mud-icon-button`
+   - **Scope 編輯頁**:
+     - 導向 `/scopes/edit/{id}`
+     - Scope Name 欄位：`input[aria-label='Name']`（顯示如 `api`）
 
 ## 常見錯誤與例外狀況
 
-- **以非管理員帳號登入 AdminUI** → 畫面顯示「403 Forbidden 存取被拒」或導向錯誤頁 → 該帳號缺少 `Administrator` 角色宣告 → 請在資料庫或透過 Super Admin 賦予該帳號管理員角色。
-- **審核時對已核准 (Approved) 的 App 重複點擊核准** → 後端回傳 `400 Bad Request`，介面彈出錯誤提示 → 狀態機不允許從 Approved 再次轉移至 Approved → 重新整理頁面獲取最新狀態。
-- **搜尋不存在的 Client 或 User** → 列表顯示「查無相符資料（空列表）」 → 關鍵字無匹配項目 → 檢查輸入之關鍵字是否正確。
+本介面完整涵蓋 E2E 測試（`AdminUI管理介面.feature`）之 17 項場景與邊界驗證：
+
+1. **Dashboard 導覽完整性驗證** → 首頁正確渲染 Dashboard 標題與 Users、Roles、Scopes、Applications 導覽列。
+2. **Users 列表種子資料確認** → 開啟 `/users` 頁面，列表正確載入且包含預設 `admin` 帳號。
+3. **Users 搜尋功能** → 於搜尋框輸入 `admin`，表格精確過濾顯示相符帳號。
+4. **Users 搜尋不存在之帳號** → 搜尋 `nonexistent-user-xyz` 時，表格顯示為空列表（`tbody tr` 為 0）。
+5. **Users 編輯頁跳轉** → 點擊使用者列之編輯按鈕，SignalR 路由平滑跳轉至 `/users/edit/{id}`。
+6. **Users 編輯頁資料繫結** → 編輯頁正確顯示 Username（如 `admin`）。
+7. **Users 角色核取狀態** → 編輯頁中該用戶所屬之角色方塊（如 `admin`）呈現已勾選狀態。
+8. **Roles 列表種子資料確認** → 開啟 `/roles` 頁面，列表顯示預設 `admin` 角色。
+9. **Roles 新增角色** → 輸入新角色名稱（如 `test-role`）點擊新增，列表立即呈現新增之角色項目。
+10. **Roles 新增重複角色防呆** → 新增已存在之角色名稱（如 `admin`）時，系統彈出錯誤提示通知條（`.mud-snackbar.mud-alert-filled-error`）。
+11. **Roles 刪除角色** → 點擊刪除並於二次確認對話框（`.mud-message-box`）確認後，角色從列表即時移除。
+12. **Applications 列表檢視** → 開啟 `/applications` 顯示 `OAuth Applications` 標題與現有 Clients（如 `mvc-client`）。
+13. **Applications 搜尋不存在之 Client** → 搜尋 `nonexistent-client-xyz` 時，表格過濾顯示空列表。
+14. **Applications 編輯頁跳轉與欄位顯示** → 點擊 Client 編輯按鈕跳轉至 `/applications/edit/{id}`，Client Id 欄位完整顯示。
+15. **Scopes 列表檢視** → 開啟 `/scopes` 正確列出包含 `api` 等授權範圍。
+16. **Scopes 編輯頁跳轉與欄位顯示** → 點擊 Scope 編輯按鈕跳轉至 `/scopes/edit/{id}`，Scope Name 欄位正確顯示。
+17. **未授權存取保護** → 非管理員身分無法進入 `/users`、`/roles`、`/applications`、`/scopes` 等管理路由。
 
 ## 你現在可以做的下一步
 
-- 執行 AdminUI E2E 自動化測試：`dotnet test test/OAuth.AuthServer.WebUI.E2E --filter "FullyQualifiedName~AdminUI"`
-- 檢閱後端 API 實作細節：參閱 [第三方應用審核流指南](../app-review-workflow/app-review-workflow-for-developers.md)
+- 執行 AdminUI Playwright E2E 自動化測試：
+  ```bash
+  dotnet test test/OAuth.AuthServer.WebUI.E2E --filter "FullyQualifiedName~AdminUI"
+  ```
+- 參閱後端應用審核 API：[第三方應用審核流指南](../app-review-workflow/app-review-workflow-for-developers.md)
+- 參閱使用者狀態管理 API：[使用者狀態管理指南](../user-status-management/user-status-management-for-developers.md)
