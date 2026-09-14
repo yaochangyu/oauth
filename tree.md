@@ -132,10 +132,11 @@
 │       ├── SpaHostFixture.cs
 │       ├── SpaHostTests.cs
 │       └── TestSettings.cs
-├── architecture/
-│   ├── diagrams.md                                  # 核心授權流程與憑證狀態設計文件
-│   └── openapi.yml                                  # OpenAPI 規格（完整）
-├── guides/                                          # 使用場景操作文件（依模組分組，開發者版/使用者版）
+├── doc/
+│   ├── architecture/
+│   │   ├── diagrams.md                              # 核心授權流程與憑證狀態設計文件
+│   │   └── openapi.yml                              # OpenAPI 規格（完整）
+│   └── guides/                                      # 使用場景操作文件（依模組分組，開發者版/使用者版）
 ├── .archive/                                        # 已完成的計畫書封存
 │   ├── AdminWorktree.plan.md                        # Git Worktree 與 Admin UI 問題調查計畫（已完成，封存）
 │   ├── diagrams.plan.md                             # 循序圖與憑證狀態機設計計畫（已完成，封存）
