@@ -176,7 +176,7 @@ src/Clients/OAuth.Client.Mvc/appsettings.Development.json
 ├── test/
 │   ├── OAuth.AuthServer.IntegrationTest/  # BDD 整合測試（Reqnroll + Testcontainers）
 │   └── OAuth.E2E.WebwrightTest/           # E2E 測試（Webwright）
-├── doc/
+├── architecture/
 │   └── openapi.yml                     # OpenAPI 3.1 規格
 ├── docker-compose.yml                  # PostgreSQL 16 + Seq
 └── Taskfile.yml                        # 開發指令集中管理
@@ -306,7 +306,7 @@ curl -X POST https://localhost:7001/connect/token \
 
 ## API 端點
 
-完整規格見 `doc/openapi.yml`。
+完整規格見 `architecture/openapi.yml`。
 
 ### Authorization Server
 
