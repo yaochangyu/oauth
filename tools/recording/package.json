@@ -1,0 +1,14 @@
+{
+  "name": "recording-tools",
+  "version": "1.0.0",
+  "description": "Browser automation and recording tools for OAuth scenarios",
+  "type": "module",
+  "main": "record-scenario.js",
+  "scripts": {
+    "record": "node record-scenario.js",
+    "record:login-consent": "node record-scenario.js --scenario login-consent"
+  },
+  "dependencies": {
+    "playwright": "^1.50.0"
+  }
+}
