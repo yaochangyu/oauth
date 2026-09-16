@@ -10,6 +10,7 @@
  */
 
 import { fileURLToPath } from 'url';
+import { attachUrlBar, refreshUrlBar } from '../lib/url-bar.js';
 
 /**
  * 執行 login-consent 場景錄影
@@ -29,11 +30,14 @@ export async function runLoginConsent(page, options = {}) {
   console.log(`MVC Client: ${mvcClientUrl}`);
   console.log(`測試帳號: ${email}\n`);
 
+  await attachUrlBar(page);
+
   // [1/5] 註冊帳號
   console.log(`[1/5] 註冊帳號 ${email}...`);
   try {
     await page.goto(`${authServerUrl}/register`, { waitUntil: 'networkidle' });
     await page.waitForSelector("input[name='email']", { timeout: 15000 });
+    await refreshUrlBar(page);
     await page.fill("input[name='email']", email);
     await page.waitForTimeout(300);
     await page.fill("input[name='password']", password);
@@ -53,6 +57,7 @@ export async function runLoginConsent(page, options = {}) {
     await page.goto(`${mvcClientUrl}/Profile`, { waitUntil: 'domcontentloaded' });
     // 會觸發 Challenge 並自動重定向至 AuthServer /login 或 /connect/authorize
     await page.waitForTimeout(1000);
+    await refreshUrlBar(page);
     console.log(`[2/5] 已發起存取受保護頁面，目前 URL: ${page.url()}`);
   } catch (err) {
     throw new Error(`[2/5] 前往 MVC Client 失敗: ${err.message}`);
@@ -62,6 +67,7 @@ export async function runLoginConsent(page, options = {}) {
   console.log(`[3/5] 等待 AuthServer 登入頁並填寫帳密...`);
   try {
     await page.waitForSelector("input[name='userName']", { timeout: 15000 });
+    await refreshUrlBar(page);
     await page.fill("input[name='userName']", email);
     await page.waitForTimeout(300);
     await page.fill("input[type='password']", password);
@@ -90,6 +96,7 @@ export async function runLoginConsent(page, options = {}) {
       throw new Error(`[4/5] 異常：未偵測到同意頁面 (Consent page skipped)`);
     }
 
+    await refreshUrlBar(page);
     console.log(`[4/5] 同意頁面已載入 (URL: ${page.url()})，點擊「同意」...`);
     await page.waitForTimeout(500);
     await page.click(consentButtonSelector);
@@ -102,8 +109,9 @@ export async function runLoginConsent(page, options = {}) {
   console.log(`[5/5] 等待導回 MVC Client 並確認個人資料頁面...`);
   try {
     await page.waitForSelector("h1:has-text('個人資料')", { timeout: 15000 });
+    await refreshUrlBar(page);
     console.log(`[5/5] 成功到達 MVC Client 個人資料頁面 (URL: ${page.url()})！`);
-    
+
     // 額外停留 2 秒讓錄製畫面穩定呈現最終狀態
     await page.waitForTimeout(2000);
   } catch (err) {

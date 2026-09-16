@@ -12,6 +12,10 @@
 
 [檢視操作流程圖 (HTML)](./account-registration/diagram.html)
 
+### 畫面截圖
+
+![註冊畫面](./screenshots/login-consent/01-register.png)
+
 ### 操作步驟
 
 1. **打開註冊頁面**
@@ -41,6 +45,10 @@
 ### 操作流程圖
 
 [檢視操作流程圖 (HTML)](./account-login-logout/diagram.html)
+
+### 畫面截圖
+
+![登入畫面](./screenshots/login-consent/02-login.png)
 
 ### 操作步驟
 
@@ -169,6 +177,10 @@
 ### 操作流程圖
 
 [檢視操作流程圖 (HTML)](./consent-page-ui/diagram.html)
+
+### 畫面截圖
+
+![同意授權畫面](./screenshots/login-consent/03-consent.png)
 
 ### 操作步驟
 

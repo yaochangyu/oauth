@@ -48,6 +48,24 @@ SCENARIO=login-consent OUTPUT_PATH=./output/my-demo.webm node record-scenario.js
 | `AUTH_SERVER_URL` | AuthServer 基礎網址 | `https://localhost:7001` |
 | `MVC_CLIENT_URL` | MVC Client 基礎網址 | `https://localhost:5101` |
 
+## 截圖工具
+
+`screenshot-login-consent.js` 用同一套步驟拍四張關鍵畫面的 PNG（而非影片），供文件附圖使用：
+
+```bash
+node screenshot-login-consent.js
+# 輸出至 ./output/screenshots/01-register.png ~ 04-profile.png
+```
+
+搭配文件：[login-consent-walkthrough.md](./login-consent-walkthrough.md)。
+
+## 網址列 overlay
+
+`lib/url-bar.js` 會在畫面頂端注入一條模擬網址列，顯示當下 `window.location.href`
+（headless 瀏覽器本身沒有真實瀏覽器外框，錄影/截圖預設看不到網址，因此用這個 overlay 補上）。
+新場景若也想要截圖/影片裡看得到網址，在建立 `page` 後呼叫一次 `attachUrlBar(page)`，
+每次要截圖或錄影前若剛完成 navigation，再呼叫 `refreshUrlBar(page)` 確保文字是最新網址。
+
 ## 如何擴充新場景
 
 1. 在 `scenarios/` 目錄下新增場景實作檔案（例如 `scenarios/refresh-token.js`），並匯出非同步函式：

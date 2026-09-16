@@ -13,6 +13,12 @@
 - [檢視跨模組端到端線性流程圖 (HTML)](./cross-module-real-world-scenarios/diagram.html)
 - [檢視跨模組端到端循序圖 (HTML)](./cross-module-real-world-scenarios/diagram-2.html)
 
+### 畫面截圖
+
+登入 + 同意授權完成後導回第三方應用（MVC Client）的個人資料頁，可見 Claims 與 Token 核發狀態：
+
+![登入授權完成後的個人資料頁（含 Claims、Access/Refresh Token 狀態）](./screenshots/login-consent/04-profile.png)
+
 ### 主要操作流程
 
 1. **新使用者註冊新帳號**
